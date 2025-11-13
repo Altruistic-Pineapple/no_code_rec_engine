@@ -1,0 +1,11 @@
+{
+  "mix_id": "your-mix-id",
+  "mappings": {
+    "Show Title": "title",
+    "Genre": "tags",
+    "Rating": "rating",
+    "Image URL": "image_url",
+    "Description": "description",
+    "ID": "content_id"
+  }
+}

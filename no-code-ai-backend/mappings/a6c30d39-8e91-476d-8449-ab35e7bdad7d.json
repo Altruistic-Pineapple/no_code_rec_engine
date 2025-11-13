@@ -1,0 +1,11 @@
+{
+  "mix_id": "a6c30d39-8e91-476d-8449-ab35e7bdad7d",
+  "mappings": {
+    "Show Title": "title",
+    "Genre": "tags",
+    "Rating": "rating",
+    "Image URL": "image_url",
+    "Description": "description",
+    "ID": "content_id"
+  }
+}
