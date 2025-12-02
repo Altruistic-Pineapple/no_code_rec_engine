@@ -1,0 +1,10 @@
+{
+  "mix_id": "78449abe-3f87-4380-b07d-b808f27c92fb",
+  "mappings": {
+    "movie_title": "title",
+    "poster_url": "image_url",
+    "film_genre": "tags",
+    "movie_description": "description",
+    "brightcove_id": "content_id"
+  }
+}
