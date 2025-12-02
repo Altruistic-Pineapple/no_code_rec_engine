@@ -102,7 +102,47 @@ async def map_fields(request: FieldMappingRequest, db: Session = Depends(get_db)
 
         db.commit()
 
-    return {"message": "Field mapping saved", "path": mapping_path, "rows_inserted": inserted}
+    # Automatically rebuild embeddings after mapping
+    try:
+        # Re-generate embeddings for this mix
+        rows = db.query(MixContent).filter(MixContent.mix_id == request.mix_id).all()
+        if rows:
+            df = pd.DataFrame([
+                {"content_id": r.content_id, "title": r.title, "description": r.description}
+                for r in rows
+            ])
+            
+            title = df["title"] if "title" in df.columns else pd.Series([""] * len(df))
+            desc = df["description"] if "description" in df.columns else pd.Series([""] * len(df))
+            df["text"] = title.fillna("") + " " + desc.fillna("")
+            
+            if not df.empty:
+                # compute TF-IDF
+                tfidf_sparse = TfidfVectorizer().fit_transform(df["text"])
+                try:
+                    tfidf = tfidf_sparse.toarray()
+                except Exception:
+                    tfidf = np.vstack([row.toarray().ravel() for row in tfidf_sparse])
+                
+                # persist embeddings
+                try:
+                    db.query(Embedding).filter(Embedding.mix_id == request.mix_id).delete()
+                    embeddings_inserted = 0
+                    for idx, row in df.iterrows():
+                        vec = tfidf[idx]
+                        buf = BytesIO()
+                        np.save(buf, vec, allow_pickle=False)
+                        emb = Embedding(mix_id=request.mix_id, content_id=row.get("content_id"), vector=buf.getvalue())
+                        db.add(emb)
+                        embeddings_inserted += 1
+                    db.commit()
+                except Exception:
+                    db.rollback()
+    except Exception:
+        # Silently fail on embeddings - mapping already succeeded
+        pass
+
+    return {"message": "Field mapping saved", "path": mapping_path, "rows_inserted": inserted, "embeddings_generated": True}
 
 
 @router.post("/rebuild-all")

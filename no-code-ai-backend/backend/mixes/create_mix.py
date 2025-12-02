@@ -10,6 +10,7 @@ router = APIRouter()
 # Pydantic schema for incoming request
 class MixCreateRequest(BaseModel):
     title: str
+    quality_level: int = 2  # Default to Level 2 (1, 2, or 3)
 
 # DB dependency
 def get_db():
@@ -25,7 +26,8 @@ def create_mix(request: MixCreateRequest, db: Session = Depends(get_db)):
     new_mix = models.Mix(
         id=mix_id,
         title=request.title,
-        status="draft"
+        status="draft",
+        quality_level=str(request.quality_level)
     )
     db.add(new_mix)
     db.commit()
@@ -33,6 +35,7 @@ def create_mix(request: MixCreateRequest, db: Session = Depends(get_db)):
     return {
         "mix_id": new_mix.id,
         "title": new_mix.title,
-        "status": new_mix.status
+        "status": new_mix.status,
+        "quality_level": int(new_mix.quality_level)
     }
 

@@ -19,12 +19,14 @@ class UserRead(BaseModel):
 class UserActivityCreate(BaseModel):
     user_id: str
     mix_id: str
+    content_id: Optional[str] = None  # Content that was viewed
     event_type: str  # keep it simple; you can later validate choices
 
 class UserActivityRead(BaseModel):
     id: str
     user_id: str
     mix_id: str
+    content_id: Optional[str] = None
     event_type: str
     timestamp: datetime
 

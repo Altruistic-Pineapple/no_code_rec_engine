@@ -25,6 +25,7 @@ def log_user_activity(payload: UserActivityCreate, db: Session = Depends(get_db)
     rec = models.UserActivity(
         user_id=payload.user_id,
         mix_id=payload.mix_id,
+        content_id=payload.content_id,
         event_type=payload.event_type,
     )
     db.add(rec)
