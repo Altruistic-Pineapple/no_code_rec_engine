@@ -1,0 +1,16 @@
+Show Title,Genre,Rating,Image URL
+Scream,Horror,R,https://example.com/scream.jpg
+Jurassic Park,Adventure,PG-13,https://example.com/jurassicpark.jpg
+The Lion King,Animation,G,https://example.com/lionking.jpg
+The Matrix,Sci-Fi,R,https://example.com/matrix.jpg
+Clueless,Comedy,PG-13,https://example.com/clueless.jpg
+Forrest Gump,Drama,PG-13,https://example.com/forrestgump.jpg
+Toy Story,Animation,G,https://example.com/toystory.jpg
+Men in Black,Action,PG-13,https://example.com/meninblack.jpg
+Titanic,Drama,PG-13,https://example.com/titanic.jpg
+The Blair Witch Project,Horror,R,https://example.com/blairwitch.jpg
+Space Jam,Family,PG,https://example.com/spacejam.jpg
+The Sixth Sense,Thriller,PG-13,https://example.com/sixthsense.jpg
+Saving Private Ryan,War,R,https://example.com/savingprivateryan.jpg
+Good Will Hunting,Drama,R,https://example.com/goodwillhunting.jpg
+Mulan,Animation,G,https://example.com/mulan.jpg
