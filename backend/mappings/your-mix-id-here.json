@@ -1,0 +1,10 @@
+{
+  "mix_id": "your-mix-id-here",
+  "mappings": {
+    "Title": "title",
+    "Overview": "description",
+    "Thumb": "image_url",
+    "ID": "content_id",
+    "Genres": "tags"
+  }
+}
