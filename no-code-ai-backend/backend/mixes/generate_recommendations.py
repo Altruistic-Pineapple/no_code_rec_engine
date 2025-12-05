@@ -218,14 +218,16 @@ async def generate_recommendations(mix_id: str, user_id: str = None, content_id:
                 watched_scores[watched_id] = watched_sims
         
         # Apply collaborative filtering: boost items similar to watched items
+        # Also filter out watched items completely
+        filtered_recommendations = []
         for i, idx in enumerate(top_indices):
             tfidf_score = float(scores[idx])
             content_id_val = df.iloc[idx]["content_id"]
             
             if content_id_val in watched_content_ids:
-                # Heavily demote watched items (user already saw this)
-                hybrid_score = tfidf_score * 0.01
-                print(f"DEBUG Level 2: {content_id_val} is watched, demoted: {tfidf_score} -> {hybrid_score}")
+                # Skip watched items entirely - don't include in results
+                print(f"DEBUG Level 2: {content_id_val} is watched, filtering out")
+                continue
             else:
                 # Sum similarity of this item to all watched items (collaborative boost)
                 collab_boost = sum(watched_sims[idx] for watched_sims in watched_scores.values())
@@ -237,7 +239,11 @@ async def generate_recommendations(mix_id: str, user_id: str = None, content_id:
                 hybrid_score = (tfidf_score * 0.3) + (collab_boost * 0.7)
                 print(f"DEBUG Level 2: {content_id_val} TF-IDF={tfidf_score:.4f}, collab_boost={collab_boost:.4f}, hybrid={hybrid_score:.4f}")
             
-            recommendations[i]["score"] = float(hybrid_score)
+            rec = recommendations[i].copy()
+            rec["score"] = float(hybrid_score)
+            filtered_recommendations.append(rec)
+        
+        recommendations = filtered_recommendations
         
         # RE-SORT by new hybrid scores (create different ranking than Level 1)
         recommendations = sorted(recommendations, key=lambda x: x.get("score", 0), reverse=True)
@@ -264,14 +270,16 @@ async def generate_recommendations(mix_id: str, user_id: str = None, content_id:
                 watched_scores[watched_id] = watched_sims
         
         # Apply semantic similarity + collaborative boost + user history
+        # Also filter out watched items completely
+        filtered_recommendations = []
         for i, idx in enumerate(top_indices):
             semantic_score = float(scores[idx])
             content_id_val = df.iloc[idx]["content_id"]
             
             if content_id_val in watched_content_ids:
-                # Heavily demote items already watched
-                hybrid_score = semantic_score * 0.01
-                print(f"DEBUG Level 3: {content_id_val} is watched, demoted: {semantic_score} -> {hybrid_score}")
+                # Skip watched items entirely - don't include in results
+                print(f"DEBUG Level 3: {content_id_val} is watched, filtering out")
+                continue
             else:
                 # Boost items semantically similar to watched items (collaborative signal)
                 collab_boost = sum(watched_sims[idx] for watched_sims in watched_scores.values())
@@ -283,7 +291,11 @@ async def generate_recommendations(mix_id: str, user_id: str = None, content_id:
                 hybrid_score = (semantic_score * 0.8) + (collab_boost * 0.2)
                 print(f"DEBUG Level 3: {content_id_val} semantic={semantic_score:.4f}, collab_boost={collab_boost:.4f}, hybrid={hybrid_score:.4f}")
             
-            recommendations[i]["score"] = float(hybrid_score)
+            rec = recommendations[i].copy()
+            rec["score"] = float(hybrid_score)
+            filtered_recommendations.append(rec)
+        
+        recommendations = filtered_recommendations
         
         # RE-SORT by new hybrid scores (create premium ranking with both signals)
         recommendations = sorted(recommendations, key=lambda x: x.get("score", 0), reverse=True)

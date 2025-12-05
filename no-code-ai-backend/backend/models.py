@@ -15,20 +15,26 @@ class Mix(Base):
     quality_level = Column(String, nullable=False, default="2")  # Default to Level 2
     created_at = Column(DateTime, nullable=False, server_default=func.now(), index=True)
 
-# --- User record ---
+# --- User record (matches Supabase schema) ---
 class User(Base):
     __tablename__ = "users"
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    name = Column(String, nullable=False)
-    user_metadata = Column("metadata", JSON, nullable=True)  # optional
+    supabase_user_id = Column(String, nullable=True)
+    email = Column(String, nullable=True)
+    name = Column(String, nullable=True)
+    subscription_status = Column(String, nullable=True)
+    stripe_customer_id = Column(String, nullable=True)
+    stripe_subscription_id = Column(String, nullable=True)
+    stripe_subscription_item_id = Column(String, nullable=True)
+    created_at = Column(DateTime, nullable=True, server_default=func.now())
 
 # --- User activity tracking ---
 class UserActivity(Base):
     __tablename__ = "user_activity"
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
+    user_id = Column(String, nullable=False, index=True)
     mix_id = Column(String, ForeignKey("mixes.id"), nullable=False, index=True)
     content_id = Column(String, nullable=True, index=True)  # Content that was viewed
     event_type = Column(String, nullable=False)  # e.g., "view", "play", "like"
@@ -63,21 +69,23 @@ class Embedding(Base):
     created_at = Column(DateTime, nullable=False, server_default=func.now(), index=True)
 
 
-# --- Field mappings stored in DB (optional) ---
+# --- Field mappings stored in DB ---
 class FieldMapping(Base):
     __tablename__ = "field_mappings"
 
-    mix_id = Column(String, primary_key=True, index=True)
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    mix_id = Column(String, nullable=False, index=True)
     mappings = Column(JSON, nullable=False)
-    created_at = Column(DateTime, nullable=False, server_default=func.now(), index=True)
-    updated_at = Column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now(), index=True)
+    created_at = Column(DateTime, nullable=True, server_default=func.now())
+    updated_at = Column(DateTime, nullable=True, server_default=func.now(), onupdate=func.now())
 
 
 # --- Business rules per mix ---
 class BusinessRules(Base):
     __tablename__ = "business_rules"
 
-    mix_id = Column(String, primary_key=True, index=True)
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    mix_id = Column(String, nullable=False, index=True)
     rules = Column(JSON, nullable=False)  # Stores rule config as JSON
-    created_at = Column(DateTime, nullable=False, server_default=func.now(), index=True)
-    updated_at = Column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now(), index=True)
+    created_at = Column(DateTime, nullable=True, server_default=func.now())
+    updated_at = Column(DateTime, nullable=True, server_default=func.now(), onupdate=func.now())

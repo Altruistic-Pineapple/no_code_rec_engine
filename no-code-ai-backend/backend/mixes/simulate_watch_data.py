@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from backend.database import get_db
-from backend.models import User, UserActivity, MixContent
+from backend.models import UserActivity, MixContent
 import uuid
 import random
 
@@ -11,20 +11,15 @@ router = APIRouter()
 async def simulate_watch_data(payload: dict, db: Session = Depends(get_db)):
     """
     Simulate user watch data for testing Level 2/3 (Hybrid) recommendations.
-    Creates/retrieves a test user and marks 2-3 TOP content items as watched.
+    Marks 2-3 TOP content items as watched for a test user.
     This ensures Level 2 and 3 will show clear differences from Level 1.
     """
     mix_id = payload.get('mix_id')
     if not mix_id:
         raise HTTPException(status_code=400, detail="mix_id required")
     
-    # Get or create test user
+    # Use a fixed test user ID (just a string identifier for user_activity)
     test_user_id = "test-user-001"
-    test_user = db.query(User).filter(User.id == test_user_id).one_or_none()
-    if not test_user:
-        test_user = User(id=test_user_id, name="Test User")
-        db.add(test_user)
-        db.commit()
     
     # Get all content items for this mix
     content_items = db.query(MixContent).filter(MixContent.mix_id == mix_id).all()
