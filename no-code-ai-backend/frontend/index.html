@@ -1,0 +1,2410 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Bootstrap demo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link href="temp.css" rel="stylesheet">
+
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
+        integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.min.js"
+        integrity="sha384-G/EV+4j2dNv+tEPo3++6LCgdCROaejBqfUeNjuKAiuXbjrxilcCdDz6ZAVfHWe1Y"
+        crossorigin="anonymous"></script>
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg bg-body-tertiary">
+        <div class="container-fluid">
+            <!-- Logo on left -->
+            <svg class="bi me-2" width="40" height="32">
+                <use xlink:href="#bootstrap" />
+            </svg>
+
+            <!-- Hamburger on right -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false"
+                aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <!-- Auth section inside hamburger menu - at top, right aligned -->
+                <ul class="navbar-nav ms-auto mb-2 mb-lg-0 text-end" style="margin-top: 25px;">
+                    <!-- Authenticated State -->
+                    <li class="nav-item" id="authenticatedNav" style="display: none; position: relative;">
+                        <a href="javascript:void(0)" id="userDropdownToggle"
+                            style="font-size: 1.1rem; text-decoration: none; color: inherit; cursor: pointer; padding: 0.5rem;">
+                            👤 <span id="userDisplayName">mdo</span> ▼
+                        </a>
+                        <div id="customDropdownMenu"
+                            style="display: none; position: absolute; right: 0; top: 100%; background: white; border: 1px solid #ddd; border-radius: 4px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); min-width: 150px; z-index: 9999;">
+                            <a href="javascript:void(0)"
+                                style="display: block; padding: 10px 15px; text-decoration: none; color: #333;">Settings</a>
+                            <a href="javascript:void(0)"
+                                style="display: block; padding: 10px 15px; text-decoration: none; color: #333;">Profile</a>
+                            <hr style="margin: 0;">
+                            <a href="javascript:void(0)" id="logoutBtn"
+                                style="display: block; padding: 10px 15px; text-decoration: none; color: #333;">Sign
+                                out</a>
+                        </div>
+                    </li>
+                    <!-- Non-Authenticated State -->
+                    <li class="nav-item" id="unauthenticatedNav">
+                        <a href="#" class="btn btn-primary btn-sm" id="loginBtn" data-bs-toggle="modal"
+                            data-bs-target="#loginModal">
+                            Login
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- Mobile Sidebar Content (hidden on desktop) -->
+                <div class="d-lg-none w-100 mt-3" id="mobileSidebarContent" style="display: none;">
+                    <h6 class="mb-2">My Mixes</h6>
+                    <input type="text" id="mobileMixSearchInput" class="form-control form-control-sm mb-2"
+                        placeholder="Search mixes..." />
+                    <button id="mobileCreateMixBtn" class="btn btn-primary btn-sm w-100 mb-2">Create Mix +</button>
+                    <ul class="nav nav-pills flex-column mb-3" id="mobileMixesList"></ul>
+                    <hr>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Login Modal -->
+    <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="loginModalLabel">Login</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="loginForm">
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="username" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="password" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="submitLoginBtn">Login</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <main>
+        <h1 class="visually-hidden">Sidebars examples</h1>
+
+        <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+            <symbol id="bootstrap" viewBox="0 0 118 94">
+                <title>Bootstrap</title>
+                <path fill-rule="evenodd" clip-rule="evenodd"
+                    d="M24.509 0c-6.733 0-11.715 5.893-11.492 12.284.214 6.14-.064 14.092-2.066 20.577C8.943 39.365 5.547 43.485 0 44.014v5.972c5.547.529 8.943 4.649 10.951 11.153 2.002 6.485 2.28 14.437 2.066 20.577C12.794 88.106 17.776 94 24.51 94H93.5c6.733 0 11.714-5.893 11.491-12.284-.214-6.14.064-14.092 2.066-20.577 2.009-6.504 5.396-10.624 10.943-11.153v-5.972c-5.547-.529-8.934-4.649-10.943-11.153-2.002-6.484-2.28-14.437-2.066-20.577C105.214 5.894 100.233 0 93.5 0H24.508zM80 57.863C80 66.663 73.436 72 62.543 72H44a2 2 0 01-2-2V24a2 2 0 012-2h18.437c9.083 0 15.044 4.92 15.044 12.474 0 5.302-4.01 10.049-9.119 10.88v.277C75.317 46.394 80 51.21 80 57.863zM60.521 28.34H49.948v14.934h8.905c6.884 0 10.68-2.772 10.68-7.727 0-4.643-3.264-7.207-9.012-7.207zM49.948 49.2v16.458H60.91c7.167 0 10.964-2.876 10.964-8.281 0-5.406-3.903-8.178-11.425-8.178H49.948z">
+                </path>
+            </symbol>
+        </svg>
+
+
+        <nav class="sidebar flex-column flex-shrink-0 p-3 bg-body-tertiary" id="mainSidebar"
+            style="width: 280px; display: none;">
+            <h5 class="mb-3">My Mixes</h5>
+            <div class="mb-3" style="position: relative;">
+                <input type="text" id="mixSearchInput" class="form-control form-control-sm mb-2"
+                    placeholder="Search mixes..." />
+                <div id="searchResults" class="position-absolute bg-white border border-secondary rounded mt-1"
+                    style="width: 100%; max-height: 200px; overflow-y: auto; z-index: 1000; display: none; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                </div>
+            </div>
+            <div class="mb-3">
+                <button id="myButton" class="btn btn-primary btn-sm w-100">Create Mix +</button>
+            </div>
+            <ul class="nav nav-pills flex-column mb-auto" id="mixesList">
+            </ul>
+            <hr>
+        </nav>
+
+        <div class="container-fluid">
+            <div class="row">
+                <!-- Left Column -->
+                <div class="col-lg-6 col-xl-5">
+                    <!-- Upload Content Card -->
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title">Upload Content</h5>
+                            <div class="mb-3">
+                                <input type="file" id="csvFile" class="form-control" accept=".csv" />
+                            </div>
+                            <button id="uploadBtn" class="btn btn-primary">Upload</button>
+                            <span id="uploadStatus" class="ms-3">No content uploaded</span>
+                        </div>
+                    </div>
+
+                    <!-- Map Fields Card -->
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Map Fields</h5>
+                            <div class="mb-3">
+                                <label class="form-label">Title</label>
+                                <select class="form-select" id="titleSelect">
+                                    <option value="">Select column...</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Image</label>
+                                <select class="form-select" id="imageSelect">
+                                    <option value="">Select column...</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Tags</label>
+                                <select class="form-select" id="tagsSelect">
+                                    <option value="">Select column...</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Description</label>
+                                <select class="form-select" id="descriptionSelect">
+                                    <option value="">Select column...</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Content ID</label>
+                                <select class="form-select" id="contentIdSelect">
+                                    <option value="">Select column...</option>
+                                </select>
+                            </div>
+                            <button id="mapFieldsBtn" class="btn btn-primary">Map Fields</button>
+                            <span id="mapFieldsStatus" class="ms-3">Ready to map</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column -->
+                <div class="col-lg-6 col-xl-7">
+                    <!-- Full Width Row -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card mb-4">
+                                <div class="card-body">
+                                    <h5 class="card-title">Select Recommendation Quality Level</h5>
+                                    <p class="text-muted"><small>Choose how your recommendations will be curated</small>
+                                    </p>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Curation Level:</label>
+                                        <div class="d-flex align-items-center gap-3">
+                                            <small>Speed</small>
+                                            <input type="range" class="form-range" id="qualitySlider" min="1" max="3"
+                                                value="2" style="flex: 1;">
+                                            <small>Quality</small>
+                                        </div>
+                                        <div class="mt-3 p-3 bg-light rounded">
+                                            <strong id="qualityTitle">Balanced (Hybrid ML)</strong>
+                                            <p class="mb-0 mt-2" id="qualityDescription">
+                                                Uses a hybrid approach combining traditional and collaborative
+                                                filtering. Good balance between speed and accuracy.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card mb-4">
+                                <div class="card-body">
+                                    <h5 class="card-title">Set Business Rules (Optional)</h5>
+                                    <p class="text-muted"><small>Fine-tune how recommendations are filtered and
+                                            ranked</small></p>
+
+                                    <div id="rulesContainer" class="mb-3"></div>
+
+                                    <button id="addRuleBtn" class="btn btn-sm btn-outline-primary">+ Add Rule</button>
+                                    <button id="saveRulesBtn" class="btn btn-sm btn-primary ms-2">Save Rules</button>
+                                    <button id="clearRulesBtn" class="btn btn-sm btn-outline-danger ms-2">Clear All
+                                        Rules</button>
+                                    <span id="rulesStatus" class="ms-3 text-muted">No rules configured</span>
+                                </div>
+                            </div>
+
+                            <div class="card mb-4">
+                                <div class="card-body">
+                                    <h5 class="card-title">Test Recommendations (Optional)</h5>
+                                    <p class="text-muted"><small>Verify recommendations are working at your mix's
+                                            selected quality level</small></p>
+
+                                    <button id="testRecsBtn" class="btn btn-sm btn-outline-success mb-3">Test
+                                        Recommendations</button>
+                                    <span id="testStatus" class="ms-2 text-muted"></span>
+
+                                    <div id="testRecsContainer" class="mt-3"></div>
+                                </div>
+                            </div>
+
+                            <div class="card mb-4">
+                                <div class="card-body">
+                                    <h5 class="card-title">Integration Code Generator</h5>
+                                    <p>Select your platform and language to get integration code</p>
+
+                                    <!-- Level 1: Platform Type -->
+                                    <div class="mb-4">
+                                        <label class="form-label"><strong>Step 1: Platform Type</strong></label>
+                                        <div class="btn-group d-flex gap-2" role="group">
+                                            <input type="radio" class="btn-check" name="platformType" id="platformOTT"
+                                                value="ott" checked>
+                                            <label class="btn btn-outline-primary" for="platformOTT">OTT</label>
+
+                                            <input type="radio" class="btn-check" name="platformType" id="platformApp"
+                                                value="app">
+                                            <label class="btn btn-outline-primary" for="platformApp">App</label>
+
+                                            <input type="radio" class="btn-check" name="platformType" id="platformWeb"
+                                                value="web">
+                                            <label class="btn btn-outline-primary" for="platformWeb">Web</label>
+                                        </div>
+                                    </div>
+
+                                    <!-- Level 2: Language Selection -->
+                                    <div class="mb-4">
+                                        <label class="form-label"><strong>Step 2: Language</strong></label>
+                                        <div id="languageOptions" class="btn-group d-flex gap-2" role="group">
+                                            <!-- Language options will be populated dynamically -->
+                                        </div>
+                                    </div>
+
+                                    <button id="generateCodeBtn" class="btn btn-primary mb-3">Generate Code</button>
+
+                                    <div id="codeDisplay" class="bg-light p-3 rounded"
+                                        style="min-height: 200px; overflow-y: auto;">
+                                        <pre id="codeContent" style="margin: 0;"></pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <script>
+                    // User initialization
+                    let currentUserId = null;
+
+                    // Business Rules (declared early for use in test recommendations)
+                    let currentRules = {};
+
+                    async function initializeUser() {
+                        try {
+                            // Check if user already exists in localStorage
+                            const storedUserId = localStorage.getItem('currentUserId');
+                            if (storedUserId) {
+                                currentUserId = storedUserId;
+                                console.log('Using existing user:', currentUserId);
+                                return;
+                            }
+
+                            // Create a new user
+                            const userId = 'user-' + Date.now();
+                            const response = await fetch('http://127.0.0.1:8000/users', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ user_id: userId })
+                            });
+
+                            const data = await response.json();
+                            currentUserId = data.user_id;
+                            localStorage.setItem('currentUserId', currentUserId);
+                            console.log('Created new user:', currentUserId);
+                        } catch (error) {
+                            console.error('Error initializing user:', error);
+                        }
+                    }
+
+                    // Initialize user on page load
+                    window.addEventListener('load', initializeUser);
+
+                    // Quality Level Selection
+                    let selectedQualityLevel = '2'; // Default: Balanced
+
+                    const qualityLevels = {
+                        '1': {
+                            title: 'Level 1: Traditional ML',
+                            description: '100% TF-IDF keyword matching. Pure content-based similarity, no user personalization. Fastest & most stable.'
+                        },
+                        '2': {
+                            title: 'Level 2: Collaborative Filtering',
+                            description: '30% TF-IDF + 70% collaborative boost. Learns user preferences by boosting items similar to what they watched. Personalized.'
+                        },
+                        '3': {
+                            title: 'Level 3: Premium LLM + Collaborative',
+                            description: '80% semantic understanding (all-MiniLM embeddings) + 20% collaborative boost. Best of both worlds: semantic comprehension + user taste learning.'
+                        }
+                    };
+
+                    document.getElementById('qualitySlider').addEventListener('input', (e) => {
+                        selectedQualityLevel = e.target.value;
+                        const level = qualityLevels[selectedQualityLevel];
+                        const titleEl = document.getElementById('qualityTitle');
+                        const descEl = document.getElementById('qualityDescription');
+                        if (titleEl) titleEl.textContent = level.title;
+                        if (descEl) descEl.textContent = level.description;
+
+                        // Save quality level to backend for current mix
+                        const mixId = localStorage.getItem('currentMixId');
+                        if (mixId) {
+                            updateMixQualityLevel(mixId, selectedQualityLevel);
+                        }
+                    });
+
+                    // Load mix's quality level from backend and update slider
+                    async function loadMixQualityLevel(mixId) {
+                        try {
+                            const response = await fetch(`http://127.0.0.1:8000/mixes/${mixId}`);
+                            if (response.ok) {
+                                const data = await response.json();
+                                const qualityLevel = data.quality_level || '2';
+                                selectedQualityLevel = qualityLevel;
+                                document.getElementById('qualitySlider').value = qualityLevel;
+
+                                // Update descriptions
+                                const level = qualityLevels[qualityLevel];
+                                const titleEl = document.getElementById('qualityTitle');
+                                const descEl = document.getElementById('qualityDescription');
+                                if (titleEl) titleEl.textContent = level.title;
+                                if (descEl) descEl.textContent = level.description;
+                            }
+                        } catch (error) {
+                            console.error('Error loading mix quality level:', error);
+                        }
+                    }
+
+                    // Update mix's quality level in backend
+                    async function updateMixQualityLevel(mixId, qualityLevel) {
+                        try {
+                            await fetch(`http://127.0.0.1:8000/mixes/${mixId}/update`, {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ quality_level: parseInt(qualityLevel) })
+                            });
+                        } catch (error) {
+                            console.error('Error updating mix quality level:', error);
+                        }
+                    }
+
+                    // Test Recommendations
+                    document.getElementById('testRecsBtn').addEventListener('click', async () => {
+                        const mixId = localStorage.getItem('currentMixId');
+                        if (!mixId) {
+                            alert('Please create and configure a mix first');
+                            return;
+                        }
+
+                        const testStatus = document.getElementById('testStatus');
+                        const container = document.getElementById('testRecsContainer');
+
+                        testStatus.textContent = 'Simulating user watch data and testing quality level...';
+                        testStatus.className = 'ms-2 text-info';
+                        container.innerHTML = '';
+
+                        try {
+                            // Use the current slider value (selectedQualityLevel) as the quality level to test
+                            const mixQualityLevel = parseInt(selectedQualityLevel) || 2;
+
+                            // Simulate user watch data
+                            const simulateResponse = await fetch('http://127.0.0.1:8000/mixes/simulate-watch-data', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ mix_id: mixId })
+                            });
+                            const simulateData = await simulateResponse.json();
+                            const testUserId = simulateData.user_id;
+
+                            // Test only the selected quality level for this mix - fetch 100 items
+                            const url = `http://127.0.0.1:8000/mixes/generate-recommendations?mix_id=${mixId}&user_id=${testUserId}&top_k=100&quality_level=${mixQualityLevel}`;
+                            const response = await fetch(url);
+                            const data = await response.json();
+
+                            const levelNames = {
+                                1: 'Level 1 (Fast - Traditional ML)',
+                                2: 'Level 2 (Balanced - Hybrid ML)',
+                                3: 'Level 3 (Quality - LLM Embeddings)'
+                            };
+
+                            // Show applied rules summary (if any rules are set)
+                            const appliedRules = [];
+                            if (currentRules && currentRules.min_content_score) {
+                                appliedRules.push(`Min Score: ${(currentRules.min_content_score * 100).toFixed(0)}%`);
+                            }
+                            if (currentRules && currentRules.exclude_tags && currentRules.exclude_tags.length > 0) {
+                                appliedRules.push(`Excluding: ${currentRules.exclude_tags.join(', ')}`);
+                            }
+                            if (currentRules && currentRules.include_tags && currentRules.include_tags.length > 0) {
+                                appliedRules.push(`Include Only: ${currentRules.include_tags.join(', ')}`);
+                            }
+                            if (currentRules && currentRules.boost_tags && currentRules.boost_tags.length > 0) {
+                                appliedRules.push(`Boosting: ${currentRules.boost_tags.join(', ')}`);
+                            }
+                            if (currentRules && currentRules.max_from_same_tag && currentRules.max_from_same_tag !== 3) {
+                                appliedRules.push(`Max per Tag: ${currentRules.max_from_same_tag}`);
+                            }
+                            if (currentRules && currentRules.max_results && currentRules.max_results !== 10) {
+                                appliedRules.push(`Max Results: ${currentRules.max_results}`);
+                            }
+                            if (currentRules && currentRules.pinned_content_ids && currentRules.pinned_content_ids.length > 0) {
+                                appliedRules.push(`📌 Pinned: ${currentRules.pinned_content_ids.join(', ')}`);
+                            }
+
+                            // Only show rules section if there are rules
+                            if (appliedRules.length > 0) {
+                                const rulesCard = document.createElement('div');
+                                rulesCard.className = 'alert alert-secondary mb-2';
+                                rulesCard.innerHTML = `<small><strong>🔧 Rules Applied:</strong></small><div class="d-flex flex-wrap gap-1 mt-1">${appliedRules.map(rule => `<span class="badge bg-primary">${rule}</span>`).join('')}</div>`;
+                                container.appendChild(rulesCard);
+                            }
+
+                            const card = document.createElement('div');
+                            card.className = 'alert alert-info mt-2';
+                            card.innerHTML = `<h6>${levelNames[mixQualityLevel]} <small class="text-muted">(${data.recommendations?.length || 0} results)</small></h6>`;
+
+                            if (data.recommendations && data.recommendations.length > 0) {
+                                // Create scrollable list container - shows ~10 items, scroll for rest
+                                const listContainer = document.createElement('div');
+                                listContainer.style.maxHeight = '320px';
+                                listContainer.style.overflowY = 'auto';
+                                listContainer.style.paddingRight = '8px';
+
+                                const list = document.createElement('ul');
+                                list.className = 'list-unstyled mb-0';
+
+                                data.recommendations.forEach((rec, idx) => {
+                                    const li = document.createElement('li');
+                                    li.className = 'd-flex justify-content-between align-items-center py-1 border-bottom';
+                                    li.innerHTML = `
+                                        <small>
+                                            ${idx + 1}. <strong>${rec.title || rec.content_id}</strong>
+                                            ${rec.score ? `<span class="text-muted">(${(rec.score * 100).toFixed(1)}%)</span>` : ''}
+                                        </small>
+                                        <button class="btn btn-sm btn-outline-success mark-watched-btn" 
+                                                data-content-id="${rec.content_id}" 
+                                                data-title="${rec.title || rec.content_id}"
+                                                style="font-size: 0.7rem; padding: 2px 6px;">
+                                            👁️ Mark Watched
+                                        </button>
+                                    `;
+                                    list.appendChild(li);
+                                });
+
+                                listContainer.appendChild(list);
+                                card.appendChild(listContainer);
+
+                                // Add click handlers for mark watched buttons
+                                listContainer.querySelectorAll('.mark-watched-btn').forEach(btn => {
+                                    btn.addEventListener('click', async function () {
+                                        const contentId = this.dataset.contentId;
+                                        const title = this.dataset.title;
+
+                                        try {
+                                            // Record user activity with correct field names
+                                            await fetch('http://127.0.0.1:8000/user-activity', {
+                                                method: 'POST',
+                                                headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify({
+                                                    user_id: testUserId,
+                                                    mix_id: mixId,
+                                                    content_id: contentId,
+                                                    event_type: 'watched'
+                                                })
+                                            });
+
+                                            // Update button to show watched state
+                                            this.innerHTML = '✅ Watched';
+                                            this.className = 'btn btn-sm btn-success mark-watched-btn';
+                                            this.disabled = true;
+                                            this.style.fontSize = '0.7rem';
+                                            this.style.padding = '2px 6px';
+
+                                            // Remove this item from the list with a fade effect
+                                            const listItem = this.closest('li');
+                                            if (listItem) {
+                                                listItem.style.transition = 'opacity 0.3s, height 0.3s';
+                                                listItem.style.opacity = '0';
+                                                setTimeout(() => {
+                                                    listItem.remove();
+                                                    // Re-number remaining items
+                                                    const remainingItems = listContainer.querySelectorAll('li');
+                                                    remainingItems.forEach((item, i) => {
+                                                        const small = item.querySelector('small');
+                                                        if (small) {
+                                                            const content = small.innerHTML;
+                                                            small.innerHTML = content.replace(/^\d+\./, `${i + 1}.`);
+                                                        }
+                                                    });
+                                                }, 300);
+                                            }
+
+                                        } catch (error) {
+                                            console.error('Error marking as watched:', error);
+                                            this.innerHTML = '❌ Error';
+                                            this.className = 'btn btn-sm btn-danger';
+                                        }
+                                    });
+                                });
+                            } else {
+                                card.innerHTML += '<small class="text-muted">No recommendations found</small>';
+                            }
+
+                            container.appendChild(card);
+
+                            testStatus.textContent = '✓ Test complete! Mark items as watched, then test again to see refined recommendations.';
+                            testStatus.className = 'ms-2 text-success';
+                        } catch (error) {
+                            console.error('Error testing recommendations:', error);
+                            testStatus.textContent = '✗ Test failed. Check your mix is properly configured.';
+                            testStatus.className = 'ms-2 text-danger';
+                        }
+                    });
+
+
+                    // Business Rules Management
+
+                    async function loadRules() {
+                        const mixId = localStorage.getItem('currentMixId');
+                        if (!mixId) return;
+
+                        try {
+                            const response = await fetch(`http://127.0.0.1:8000/mixes/get-rules?mix_id=${mixId}`);
+                            const data = await response.json();
+                            currentRules = data.rules;
+                            renderRules();
+                        } catch (error) {
+                            console.error('Error loading rules:', error);
+                        }
+                    }
+
+                    function renderRules() {
+                        const container = document.getElementById('rulesContainer');
+                        container.innerHTML = '';
+                        let ruleIndex = 0;
+
+                        // Min score threshold
+                        if (currentRules.min_content_score) {
+                            ruleIndex++;
+                            const rule = document.createElement('div');
+                            rule.className = 'alert alert-info d-flex justify-content-between align-items-center mb-2';
+                            rule.innerHTML = `
+                        <span><strong>Min Score:</strong> ${(currentRules.min_content_score * 100).toFixed(0)}%</span>
+                        <button class="btn btn-sm btn-outline-danger" onclick="removeRule('min_content_score')">Remove</button>
+                    `;
+                            container.appendChild(rule);
+                        }
+
+                        // Exclude tags
+                        if (currentRules.exclude_tags && currentRules.exclude_tags.length > 0) {
+                            ruleIndex++;
+                            const rule = document.createElement('div');
+                            rule.className = 'alert alert-info d-flex justify-content-between align-items-center mb-2';
+                            rule.innerHTML = `
+                        <span><strong>Exclude Tags:</strong> ${currentRules.exclude_tags.join(', ')}</span>
+                        <button class="btn btn-sm btn-outline-danger" onclick="removeRule('exclude_tags')">Remove</button>
+                    `;
+                            container.appendChild(rule);
+                        }
+
+                        // Include tags
+                        if (currentRules.include_tags && currentRules.include_tags.length > 0) {
+                            ruleIndex++;
+                            const rule = document.createElement('div');
+                            rule.className = 'alert alert-info d-flex justify-content-between align-items-center mb-2';
+                            rule.innerHTML = `
+                        <span><strong>Include Only:</strong> ${currentRules.include_tags.join(', ')}</span>
+                        <button class="btn btn-sm btn-outline-danger" onclick="removeRule('include_tags')">Remove</button>
+                    `;
+                            container.appendChild(rule);
+                        }
+
+                        // Boost tags
+                        if (currentRules.boost_tags && currentRules.boost_tags.length > 0) {
+                            ruleIndex++;
+                            const rule = document.createElement('div');
+                            rule.className = 'alert alert-info d-flex justify-content-between align-items-center mb-2';
+                            rule.innerHTML = `
+                        <span><strong>Boost Tags:</strong> ${currentRules.boost_tags.join(', ')}</span>
+                        <button class="btn btn-sm btn-outline-danger" onclick="removeRule('boost_tags')">Remove</button>
+                    `;
+                            container.appendChild(rule);
+                        }
+
+                        // Max from same tag
+                        if (currentRules.max_from_same_tag && currentRules.max_from_same_tag !== 3) {
+                            ruleIndex++;
+                            const rule = document.createElement('div');
+                            rule.className = 'alert alert-info d-flex justify-content-between align-items-center mb-2';
+                            rule.innerHTML = `
+                        <span><strong>Max per Tag:</strong> ${currentRules.max_from_same_tag} items</span>
+                        <button class="btn btn-sm btn-outline-danger" onclick="removeRule('max_from_same_tag')">Remove</button>
+                    `;
+                            container.appendChild(rule);
+                        }
+
+                        // Max results
+                        if (currentRules.max_results && currentRules.max_results !== 10) {
+                            ruleIndex++;
+                            const rule = document.createElement('div');
+                            rule.className = 'alert alert-info d-flex justify-content-between align-items-center mb-2';
+                            rule.innerHTML = `
+                        <span><strong>Max Results:</strong> ${currentRules.max_results} items</span>
+                        <button class="btn btn-sm btn-outline-danger" onclick="removeRule('max_results')">Remove</button>
+                    `;
+                            container.appendChild(rule);
+                        }
+
+                        // Pinned content IDs
+                        if (currentRules.pinned_content_ids && currentRules.pinned_content_ids.length > 0) {
+                            ruleIndex++;
+                            const rule = document.createElement('div');
+                            rule.className = 'alert alert-warning d-flex justify-content-between align-items-center mb-2';
+                            rule.innerHTML = `
+                        <span><strong>📌 Pinned Content:</strong> ${currentRules.pinned_content_ids.join(', ')}</span>
+                        <button class="btn btn-sm btn-outline-danger" onclick="removeRule('pinned_content_ids')">Remove</button>
+                    `;
+                            container.appendChild(rule);
+                        }
+
+                        const status = document.getElementById('rulesStatus');
+                        if (ruleIndex === 0) {
+                            status.textContent = 'No rules configured';
+                            status.className = 'ms-3 text-muted';
+                        } else {
+                            status.textContent = `${ruleIndex} rule(s) active`;
+                            status.className = 'ms-3 text-success';
+                        }
+                    }
+
+                    function removeRule(ruleType) {
+                        switch (ruleType) {
+                            case 'min_content_score':
+                                currentRules.min_content_score = 0;
+                                break;
+                            case 'exclude_tags':
+                                currentRules.exclude_tags = [];
+                                break;
+                            case 'include_tags':
+                                currentRules.include_tags = [];
+                                break;
+                            case 'boost_tags':
+                                currentRules.boost_tags = [];
+                                break;
+                            case 'max_from_same_tag':
+                                currentRules.max_from_same_tag = 3;
+                                break;
+                            case 'max_results':
+                                currentRules.max_results = 10;
+                                break;
+                            case 'pinned_content_ids':
+                                currentRules.pinned_content_ids = [];
+                                break;
+                        }
+                        renderRules();
+                    }
+
+                    document.getElementById('addRuleBtn').addEventListener('click', () => {
+                        const ruleType = prompt('Rule type:\n1. min_score (0-1)\n2. exclude_tags (comma-separated)\n3. include_tags (comma-separated)\n4. boost_tags (comma-separated)\n5. max_from_same_tag (number)\n6. max_results (number)\n7. pin_content (comma-separated content IDs)\n\nEnter: 1, 2, 3, 4, 5, 6, or 7');
+
+                        const value = prompt('Enter value(s):');
+                        if (!value) return;
+
+                        switch (ruleType) {
+                            case '1':
+                                currentRules.min_content_score = Math.min(1, Math.max(0, parseFloat(value)));
+                                break;
+                            case '2':
+                                currentRules.exclude_tags = value.split(',').map(t => t.trim());
+                                break;
+                            case '3':
+                                currentRules.include_tags = value.split(',').map(t => t.trim());
+                                break;
+                            case '4':
+                                currentRules.boost_tags = value.split(',').map(t => t.trim());
+                                break;
+                            case '5':
+                                currentRules.max_from_same_tag = parseInt(value) || 3;
+                                break;
+                            case '6':
+                                currentRules.max_results = parseInt(value) || 10;
+                                break;
+                            case '7':
+                                currentRules.pinned_content_ids = value.split(',').map(t => t.trim());
+                                break;
+                            default:
+                                alert('Invalid option');
+                                return;
+                        }
+
+                        renderRules();
+                    });
+
+                    document.getElementById('saveRulesBtn').addEventListener('click', async () => {
+                        const mixId = localStorage.getItem('currentMixId');
+                        if (!mixId) {
+                            alert('Please create a mix first');
+                            return;
+                        }
+
+                        try {
+                            const response = await fetch(`http://127.0.0.1:8000/mixes/set-rules?mix_id=${mixId}`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(currentRules)
+                            });
+
+                            const data = await response.json();
+                            console.log('Rules saved:', data);
+                            document.getElementById('rulesStatus').textContent = '✓ Rules saved successfully!';
+                            document.getElementById('rulesStatus').className = 'ms-3 text-success';
+                        } catch (error) {
+                            console.error('Error saving rules:', error);
+                            document.getElementById('rulesStatus').textContent = 'Failed to save rules';
+                            document.getElementById('rulesStatus').className = 'ms-3 text-danger';
+                        }
+                    });
+
+                    document.getElementById('clearRulesBtn').addEventListener('click', async () => {
+                        if (!confirm('Clear all rules?')) return;
+
+                        const mixId = localStorage.getItem('currentMixId');
+                        if (!mixId) return;
+
+                        try {
+                            await fetch(`http://127.0.0.1:8000/mixes/delete-rules?mix_id=${mixId}`, {
+                                method: 'DELETE'
+                            });
+
+                            currentRules = {};
+                            renderRules();
+                            document.getElementById('rulesStatus').textContent = 'Rules cleared';
+                            document.getElementById('rulesStatus').className = 'ms-3 text-muted';
+                        } catch (error) {
+                            console.error('Error clearing rules:', error);
+                        }
+                    });
+
+                    document.getElementById('myButton').addEventListener('click', async () => {
+                        await createNewMix();
+                    });
+
+                    // Mobile create mix button
+                    document.getElementById('mobileCreateMixBtn')?.addEventListener('click', async () => {
+                        await createNewMix();
+                        // Collapse mobile menu after creating
+                        const navbarCollapse = document.getElementById('navbarSupportedContent');
+                        if (navbarCollapse && navbarCollapse.classList.contains('show')) {
+                            const bsCollapse = bootstrap.Collapse.getInstance(navbarCollapse);
+                            if (bsCollapse) bsCollapse.hide();
+                        }
+                    });
+
+                    async function createNewMix() {
+                        try {
+                            // Generate default name: "New Mix", "New Mix 1", "New Mix 2", etc.
+                            let defaultName = 'New Mix';
+                            let counter = 1;
+
+                            // Check existing mixes to find next available number
+                            const existingMixes = document.querySelectorAll('#mixesList .mix-link');
+                            const existingNames = Array.from(existingMixes).map(m => m.textContent.trim());
+
+                            while (existingNames.includes(defaultName)) {
+                                defaultName = `New Mix ${counter}`;
+                                counter++;
+                            }
+
+                            console.log('Creating mix with default name:', defaultName);
+
+                            // Get the logged-in user's ID
+                            const userId = authState.user ? authState.user.id : null;
+
+                            const response = await fetch('http://127.0.0.1:8000/mixes/create', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ title: defaultName, quality_level: 2, user_id: userId })
+                            });
+
+                            if (!response.ok) {
+                                const errorData = await response.json();
+                                console.error('Error response:', errorData);
+                                throw new Error(`Failed to create mix: ${response.status}`);
+                            }
+
+                            const data = await response.json();
+                            console.log('API Response:', data);
+
+                            // Save mix ID to localStorage
+                            localStorage.setItem('currentMixId', data.mix_id);
+
+                            // Load any existing rules for this mix
+                            loadRules();
+
+                            // Add the new mix to the sidebar
+                            addMixToSidebar(data.mix_id, data.title);
+
+                            // Save mixes list to localStorage
+                            saveMixesToLocalStorage();
+
+                            // Clear the input
+                            document.getElementById('mixNameInput').value = '';
+
+                            // Show rename dialog
+                            showRenameMixDialog(data.mix_id, data.title);
+
+                        } catch (error) {
+                            console.error('Error calling API:', error);
+                            // Don't show alert - let the mix be created, just log the error
+                        }
+                    }
+
+                    // Function to show rename mix dialog
+                    async function showRenameMixDialog(mixId, currentName) {
+                        const newName = prompt('Rename your mix:', currentName);
+
+                        if (newName !== null && newName.trim() !== '') {
+                            const trimmedName = newName.trim();
+
+                            try {
+                                // Save to backend database
+                                const response = await fetch(`http://127.0.0.1:8000/mixes/${mixId}/update`, {
+                                    method: 'PUT',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ title: trimmedName })
+                                });
+
+                                if (response.ok) {
+                                    // Update the mix name in BOTH sidebars (desktop and mobile)
+                                    document.querySelectorAll(`.mix-link[data-mix-id="${mixId}"]`).forEach(link => {
+                                        link.textContent = trimmedName;
+                                    });
+
+                                    // Save updated mixes to localStorage
+                                    saveMixesToLocalStorage();
+
+                                    console.log('Renamed mix:', mixId, 'to', trimmedName);
+                                } else {
+                                    console.error('Failed to rename mix');
+                                    alert('Failed to rename mix. Please try again.');
+                                }
+                            } catch (error) {
+                                console.error('Error renaming mix:', error);
+                                alert('Error renaming mix. Please try again.');
+                            }
+                        }
+                    }
+
+                    function deleteMix(mixId) {
+                        // Remove from both sidebars
+                        const mixItem = document.getElementById(`mix-${mixId}`);
+                        if (mixItem) {
+                            mixItem.remove();
+                        }
+                        const mobileMixItem = document.getElementById(`mobile-mix-${mixId}`);
+                        if (mobileMixItem) {
+                            mobileMixItem.remove();
+                        }
+
+                        // Update localStorage
+                        saveMixesToLocalStorage();
+
+                        // If deleted mix was the current one, clear it
+                        if (localStorage.getItem('currentMixId') === mixId) {
+                            localStorage.removeItem('currentMixId');
+                            // Clear the content areas
+                            document.getElementById('testStatus').textContent = '';
+                            document.getElementById('testRecsContainer').innerHTML = '';
+                        }
+                    }
+
+                    // Function to add mix to sidebar
+                    function addMixToSidebar(mixId, title) {
+                        const mixesList = document.getElementById('mixesList');
+                        const mobileMixesList = document.getElementById('mobileMixesList');
+
+                        // Check if mix already exists
+                        if (document.getElementById(`mix-${mixId}`)) {
+                            return;
+                        }
+
+                        const createMixItem = (isMobile = false) => {
+                            const newMixItem = document.createElement('li');
+                            newMixItem.className = 'nav-item d-flex align-items-center';
+                            newMixItem.id = isMobile ? `mobile-mix-${mixId}` : `mix-${mixId}`;
+                            newMixItem.style.position = 'relative';
+                            newMixItem.innerHTML = `
+                                <a href="#" class="nav-link mix-link flex-grow-1" data-mix-id="${mixId}" style="padding-right: 75px;">
+                                    ${title}
+                                </a>
+                                <button class="btn btn-sm btn-link edit-mix-btn" data-mix-id="${mixId}" style="position: absolute; right: 40px; padding: 0; color: #6c757d;" title="Rename mix">
+                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                        <path d="M12.146.854c.196-.196.511-.196.707 0l2.293 2.293c.196.196.196.511 0 .707L3.854 15H.5v-3.354L12.146.854z"/>
+                                    </svg>
+                                </button>
+                                <button class="btn btn-sm btn-link delete-mix-btn" data-mix-id="${mixId}" style="position: absolute; right: 5px; padding: 0; color: #dc3545;" title="Delete mix">
+                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                                        <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 1a.5.5 0 0 0-.5.5v1h11v-1a.5.5 0 0 0-.5-.5h-3V1a.5.5 0 0 0-.5-.5h-2a.5.5 0 0 0-.5.5v.5H2.5z"/>
+                                    </svg>
+                                </button>
+                            `;
+
+                            // Add click handler to select the mix
+                            const mixLink = newMixItem.querySelector('.mix-link');
+                            mixLink.addEventListener('click', (e) => {
+                                e.preventDefault();
+                                console.log('Mix clicked:', mixId, title);
+                                localStorage.setItem('currentMixId', mixId);
+                                loadMixQualityLevel(mixId);
+                                loadRules();
+
+                                // Update active state on both sidebars
+                                document.querySelectorAll('.mix-link').forEach(link => {
+                                    link.classList.remove('active');
+                                });
+                                document.querySelectorAll(`[data-mix-id="${mixId}"]`).forEach(link => {
+                                    if (link.classList.contains('mix-link')) link.classList.add('active');
+                                });
+
+                                // Collapse mobile menu after selection
+                                const navbarCollapse = document.getElementById('navbarSupportedContent');
+                                if (navbarCollapse && navbarCollapse.classList.contains('show')) {
+                                    const bsCollapse = bootstrap.Collapse.getInstance(navbarCollapse);
+                                    if (bsCollapse) bsCollapse.hide();
+                                }
+                            });
+
+                            // Add edit button handler
+                            const editBtn = newMixItem.querySelector('.edit-mix-btn');
+                            editBtn.addEventListener('click', (e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                showRenameMixDialog(mixId, title);
+                            });
+
+                            // Add delete button handler
+                            const deleteBtn = newMixItem.querySelector('.delete-mix-btn');
+                            deleteBtn.addEventListener('click', (e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                if (confirm(`Are you sure you want to delete "${title}"?`)) {
+                                    deleteMix(mixId);
+                                }
+                            });
+
+                            return newMixItem;
+                        };
+
+                        mixesList.appendChild(createMixItem(false));
+                        if (mobileMixesList) {
+                            mobileMixesList.appendChild(createMixItem(true));
+                        }
+                    }
+
+                    // Function to save mixes to localStorage
+                    function saveMixesToLocalStorage() {
+                        const mixes = [];
+                        document.querySelectorAll('.mix-link').forEach(link => {
+                            mixes.push({
+                                id: link.getAttribute('data-mix-id'),
+                                title: link.textContent.trim()
+                            });
+                        });
+                        localStorage.setItem('mixesList', JSON.stringify(mixes));
+                    }
+
+                    // Function to load mixes from API for the current user
+                    async function loadMixesFromAPI() {
+                        if (!authState.user || !authState.user.id) {
+                            console.log('No user logged in, skipping mix load');
+                            return;
+                        }
+
+                        try {
+                            const response = await fetch(`http://127.0.0.1:8000/mixes/?user_id=${authState.user.id}`);
+                            if (response.ok) {
+                                const mixes = await response.json();
+                                console.log('Loaded mixes from API:', mixes);
+
+                                // Clear existing mixes from sidebar
+                                const mixesList = document.getElementById('mixesList');
+                                const mobileMixesList = document.getElementById('mobileMixesList');
+                                if (mixesList) mixesList.innerHTML = '';
+                                if (mobileMixesList) mobileMixesList.innerHTML = '';
+
+                                // Add each mix to sidebar
+                                mixes.forEach(mix => {
+                                    addMixToSidebar(mix.mix_id, mix.title);
+                                });
+                            }
+                        } catch (error) {
+                            console.error('Error loading mixes from API:', error);
+                        }
+                    }
+
+                    // Legacy function - kept for backwards compatibility
+                    function loadMixesFromLocalStorage() {
+                        // Now loads from API instead
+                        loadMixesFromAPI();
+                    }
+
+                    // Search functionality
+                    document.getElementById('mixSearchInput').addEventListener('input', (e) => {
+                        const searchTerm = e.target.value.toLowerCase();
+                        const mixLinks = document.querySelectorAll('.mix-link');
+                        const searchResults = document.getElementById('searchResults');
+
+                        if (searchTerm.trim() === '') {
+                            // Hide dropdown and show all mixes
+                            searchResults.style.display = 'none';
+                            mixLinks.forEach(link => {
+                                link.closest('li').style.display = '';
+                            });
+                            return;
+                        }
+
+                        // Find matching mixes
+                        const matchedMixes = [];
+                        mixLinks.forEach(link => {
+                            const mixTitle = link.textContent.toLowerCase();
+                            const mixId = link.getAttribute('data-mix-id');
+                            const mixItem = link.closest('li');
+
+                            if (mixTitle.includes(searchTerm)) {
+                                matchedMixes.push({ title: link.textContent.trim(), id: mixId });
+                                mixItem.style.display = '';
+                            } else {
+                                mixItem.style.display = 'none';
+                            }
+                        });
+
+                        // Show search results dropdown
+                        if (matchedMixes.length > 0) {
+                            searchResults.innerHTML = '';
+                            matchedMixes.forEach(mix => {
+                                const resultItem = document.createElement('div');
+                                resultItem.className = 'p-2 border-bottom';
+                                resultItem.style.cursor = 'pointer';
+                                resultItem.style.backgroundColor = '#f8f9fa';
+                                resultItem.textContent = mix.title;
+
+                                resultItem.addEventListener('mouseenter', () => {
+                                    resultItem.style.backgroundColor = '#e9ecef';
+                                });
+
+                                resultItem.addEventListener('mouseleave', () => {
+                                    resultItem.style.backgroundColor = '#f8f9fa';
+                                });
+
+                                resultItem.addEventListener('click', () => {
+                                    // Clear search
+                                    document.getElementById('mixSearchInput').value = '';
+                                    searchResults.style.display = 'none';
+
+                                    // Show all mixes again
+                                    mixLinks.forEach(link => {
+                                        link.closest('li').style.display = '';
+                                    });
+
+                                    // Select the clicked mix
+                                    const mixLink = document.querySelector(`[data-mix-id="${mix.id}"]`);
+                                    if (mixLink) {
+                                        mixLink.click();
+                                    }
+                                });
+
+                                searchResults.appendChild(resultItem);
+                            });
+                            searchResults.style.display = 'block';
+                        } else {
+                            searchResults.style.display = 'none';
+                        }
+                    });
+
+                    // Close search results when clicking outside
+                    document.addEventListener('click', (e) => {
+                        if (!e.target.closest('#mixSearchInput') && !e.target.closest('#searchResults')) {
+                            document.getElementById('searchResults').style.display = 'none';
+                        }
+                    });
+
+                    // Mobile search functionality
+                    document.getElementById('mobileMixSearchInput')?.addEventListener('input', (e) => {
+                        const searchTerm = e.target.value.toLowerCase();
+                        const mobileMixLinks = document.querySelectorAll('#mobileMixesList .mix-link');
+
+                        mobileMixLinks.forEach(link => {
+                            const mixTitle = link.textContent.toLowerCase();
+                            const mixItem = link.closest('li');
+                            if (searchTerm.trim() === '' || mixTitle.includes(searchTerm)) {
+                                mixItem.style.display = '';
+                            } else {
+                                mixItem.style.display = 'none';
+                            }
+                        });
+                    });
+
+                    // Load mixes on page load
+                    loadMixesFromLocalStorage();
+
+                    document.getElementById('uploadBtn').addEventListener('click', async () => {
+                        const mixId = localStorage.getItem('currentMixId');
+                        const fileInput = document.getElementById('csvFile');
+                        const file = fileInput.files[0];
+                        const statusSpan = document.getElementById('uploadStatus');
+
+                        if (!mixId) {
+                            statusSpan.textContent = 'Please create a mix first';
+                            return;
+                        }
+
+                        if (!file) {
+                            statusSpan.textContent = 'Please select a file';
+                            return;
+                        }
+
+                        try {
+                            const formData = new FormData();
+                            formData.append('mix_id', mixId);
+                            formData.append('file', file);
+
+                            const response = await fetch('http://127.0.0.1:8000/mixes/upload-content', {
+                                method: 'POST',
+                                body: formData
+                            });
+
+                            const data = await response.json();
+                            console.log('Upload Response:', data);
+                            statusSpan.textContent = `Uploaded: ${file.name}`;
+
+                            // Parse CSV to get column names and populate select dropdowns
+                            const reader = new FileReader();
+                            reader.onload = (e) => {
+                                const csv = e.target.result;
+                                const lines = csv.split('\n');
+                                const headers = lines[0].split(',').map(h => h.trim());
+
+                                // Populate all select dropdowns
+                                const selects = ['titleSelect', 'imageSelect', 'tagsSelect', 'descriptionSelect', 'contentIdSelect'];
+                                selects.forEach(selectId => {
+                                    const select = document.getElementById(selectId);
+                                    select.innerHTML = '<option value="">Select column...</option>';
+                                    headers.forEach(header => {
+                                        const option = document.createElement('option');
+                                        option.value = header;
+                                        option.textContent = header;
+                                        select.appendChild(option);
+                                    });
+                                });
+                            };
+                            reader.readAsText(file);
+
+                        } catch (error) {
+                            console.error('Error uploading file:', error);
+                            statusSpan.textContent = 'Upload failed';
+                        }
+                    });
+
+                    document.getElementById('mapFieldsBtn').addEventListener('click', async () => {
+                        const mixId = localStorage.getItem('currentMixId');
+                        const statusSpan = document.getElementById('mapFieldsStatus');
+
+                        if (!mixId) {
+                            statusSpan.textContent = 'Please create a mix first';
+                            return;
+                        }
+
+                        // Get selected values from dropdowns
+                        const titleCol = document.getElementById('titleSelect').value;
+                        const imageCol = document.getElementById('imageSelect').value;
+                        const tagsCol = document.getElementById('tagsSelect').value;
+                        const descriptionCol = document.getElementById('descriptionSelect').value;
+                        const contentIdCol = document.getElementById('contentIdSelect').value;
+
+                        // Create mappings object (user_column -> internal_field)
+                        const mappings = {};
+                        if (titleCol) mappings[titleCol] = 'title';
+                        if (imageCol) mappings[imageCol] = 'image_url';
+                        if (tagsCol) mappings[tagsCol] = 'tags';
+                        if (descriptionCol) mappings[descriptionCol] = 'description';
+                        if (contentIdCol) mappings[contentIdCol] = 'content_id';
+
+                        if (Object.keys(mappings).length === 0) {
+                            statusSpan.textContent = 'Please select fields to map';
+                            return;
+                        }
+
+                        try {
+                            const response = await fetch('http://127.0.0.1:8000/mixes/map-fields', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    mix_id: mixId,
+                                    mappings: mappings
+                                })
+                            });
+
+                            const data = await response.json();
+                            console.log('Map Fields Response:', data);
+                            statusSpan.textContent = 'Fields mapped successfully';
+
+                            // Store items for recommendations
+                            try {
+                                const recsResponse = await fetch(`http://127.0.0.1:8000/mixes/generate-recommendations?mix_id=${mixId}&top_k=100`);
+                                const recsData = await recsResponse.json();
+                                localStorage.setItem('mixItems', JSON.stringify(recsData.all_items || []));
+                            } catch (e) {
+                                console.log('Could not fetch mix items:', e);
+                            }
+
+                        } catch (error) {
+                            console.error('Error mapping fields:', error);
+                            statusSpan.textContent = 'Mapping failed';
+                        }
+                    });
+
+                    // Auto-generate recommendations function
+                    async function generateRecommendationsAuto() {
+                        const mixId = localStorage.getItem('currentMixId');
+                        const topK = 10;
+                        const qualityLevel = document.getElementById('qualitySlider').value;
+                        const statusSpan = document.getElementById('recsStatus');
+                        const container = document.getElementById('recommendationsContainer');
+
+                        if (!mixId || !currentUserId) {
+                            return;
+                        }
+
+                        try {
+                            statusSpan.textContent = 'Generating recommendations...';
+
+                            // Fetch viewing history for current user
+                            const historyResponse = await fetch(`http://127.0.0.1:8000/user-activity/by-user/${currentUserId}`);
+                            const historyData = await historyResponse.json();
+
+                            let contentId = null;
+
+                            // Get the most recent watched item
+                            if (historyData && Array.isArray(historyData) && historyData.length > 0) {
+                                // Sort by timestamp (most recent first)
+                                const sorted = historyData.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                                contentId = sorted[0].content_id;
+                            } else {
+                                // Fallback: use first item from the mix
+                                const mixItems = JSON.parse(localStorage.getItem('mixItems') || '[]');
+                                if (mixItems.length > 0) {
+                                    contentId = mixItems[0].content_id;
+                                }
+                            }
+
+                            if (!contentId) {
+                                statusSpan.textContent = 'No content found to base recommendations on';
+                                container.innerHTML = '<div class="alert alert-warning">No content available</div>';
+                                return;
+                            }
+
+                            // Generate recommendations with quality level and user_id
+                            const url = `http://127.0.0.1:8000/mixes/generate-recommendations?mix_id=${mixId}&content_id=${contentId}&top_k=${topK}&quality_level=${qualityLevel}&user_id=${currentUserId}`;
+                            const response = await fetch(url);
+                            const data = await response.json();
+
+                            console.log('Recommendations:', data);
+                            statusSpan.textContent = 'Recommendations generated!';
+
+                            // Display recommendations
+                            if (data.recommendations && Array.isArray(data.recommendations)) {
+                                container.innerHTML = '<h6>Top Recommendations:</h6>';
+                                const recsList = document.createElement('ul');
+                                recsList.className = 'list-group';
+
+                                data.recommendations.forEach((rec, idx) => {
+                                    const li = document.createElement('li');
+                                    li.className = 'list-group-item';
+                                    li.innerHTML = `
+                                <strong>${idx + 1}. ${rec.title || rec.content_id}</strong><br>
+                                <small>ID: ${rec.content_id}</small><br>
+                                ${rec.description ? `<small>${rec.description.substring(0, 100)}...</small>` : ''}
+                                ${rec.score ? `<br><small class="text-success">Score: ${(rec.score * 100).toFixed(1)}%</small>` : ''}
+                            `;
+                                    recsList.appendChild(li);
+                                });
+
+                                container.appendChild(recsList);
+                            } else {
+                                container.innerHTML = '<p>No recommendations found</p>';
+                            }
+
+                        } catch (error) {
+                            console.error('Error generating recommendations:', error);
+                            statusSpan.textContent = 'Failed to generate recommendations';
+                            container.innerHTML = '';
+                        }
+                    }
+
+                    // Auto-generate recommendations when page loads
+                    window.addEventListener('load', () => {
+                        if (localStorage.getItem('currentMixId')) {
+                            // Mix is already loaded, rules will be loaded separately
+                        }
+                    });
+
+                    // Define platforms and their available languages
+                    const platformLanguages = {
+                        ott: {
+                            'brightscript': 'BrightScript (Roku)',
+                            'swift': 'Swift (tvOS)',
+                            'tizen': 'Tizen (Samsung Smart TV)',
+                            'java': 'Java (FireTV)',
+                            'kotlin': 'Kotlin (Android TV)',
+                            'javascript': 'JavaScript',
+                            'python': 'Python'
+                        },
+                        app: {
+                            'swift': 'Swift (iOS)',
+                            'kotlin': 'Kotlin (Android)',
+                            'react-native': 'React Native'
+                        },
+                        web: {
+                            'javascript': 'JavaScript',
+                            'python': 'Python',
+                            'nodejs': 'Node.js'
+                        }
+                    };
+
+                    // Code samples organized by platform and language
+                    const codeSamples = {
+                        ott: {
+                            javascript: `// OTT Platform - JavaScript
+const mixId = "YOUR_MIX_ID";
+const userId = "USER_ID";
+const topK = 5;
+const qualityLevel = 2;
+
+// Fetch recommendations
+fetch(\`http://YOUR_API_URL:8000/mixes/generate-recommendations?mix_id=\${mixId}&user_id=\${userId}&top_k=\${topK}&quality_level=\${qualityLevel}\`)
+  .then(res => res.json())
+  .then(data => {
+    console.log('Recommendations:', data.recommendations);
+    displayRecommendations(data.recommendations);
+  })
+  .catch(error => console.error('Error:', error));
+
+function displayRecommendations(recommendations) {
+  // Render in your OTT UI
+  recommendations.forEach((rec, idx) => {
+    console.log(\`\${idx + 1}. \${rec.title} (Score: \${(rec.score * 100).toFixed(1)}%)\`);
+  });
+}`,
+                            brightscript: `' OTT Platform - BrightScript (Roku)
+' Add this to your Roku channel's main scene
+
+function getRecommendations(mixId as String, userId as String, topK as Integer, qualityLevel as Integer) as Object
+    ' Create HTTP request
+    url = "http://YOUR_API_URL:8000/mixes/generate-recommendations"
+    
+    ' Build query parameters
+    params = {
+        "mix_id": mixId,
+        "user_id": userId,
+        "top_k": topK.toStr(),
+        "quality_level": qualityLevel.toStr()
+    }
+    
+    ' Create URL with parameters
+    queryString = ""
+    for each param in params.items()
+        if queryString <> ""
+            queryString = queryString + "&"
+        end if
+        queryString = queryString + param.key + "=" + param.value
+    end for
+    
+    fullUrl = url + "?" + queryString
+    
+    ' Make HTTP GET request
+    http = CreateObject("roUrlTransfer")
+    http.SetUrl(fullUrl)
+    http.AddHeader("Content-Type", "application/json")
+    http.SetTimeout(10)
+    
+    response = http.GetToString()
+    json = ParseJson(response)
+    
+    if json <> invalid and json.recommendations <> invalid
+        return json.recommendations
+    else
+        return []
+    end if
+end function
+
+' Display recommendations
+sub displayRecommendations()
+    recommendations = getRecommendations("YOUR_MIX_ID", "USER_ID", 5, 2)
+    
+    posterGrid = CreateObject("roSGNode", "PosterGrid")
+    
+    for each rec in recommendations
+        item = CreateObject("roSGNode", "ContentNode")
+        item.id = rec.content_id
+        item.title = rec.title
+        item.description = rec.description
+        posterGrid.appendChildren([item])
+    end for
+    
+    m.top.getScene().findNode("content").appendChild(posterGrid)
+end sub`,
+                            python: `# OTT Platform - Python
+import requests
+import json
+
+def get_recommendations(mix_id, user_id, top_k=5, quality_level=2):
+    """Fetch recommendations from the API"""
+    api_url = "http://YOUR_API_URL:8000/mixes/generate-recommendations"
+    
+    params = {
+        "mix_id": mix_id,
+        "user_id": user_id,
+        "top_k": top_k,
+        "quality_level": quality_level
+    }
+    
+    try:
+        response = requests.get(api_url, params=params, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+        return data.get('recommendations', [])
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching recommendations: {e}")
+        return []
+
+def display_recommendations(recommendations):
+    """Display recommendations"""
+    for idx, rec in enumerate(recommendations, 1):
+        print(f"{idx}. {rec['title']} (Score: {rec.get('score', 0) * 100:.1f}%)")
+
+# Usage
+recommendations = get_recommendations("YOUR_MIX_ID", "USER_ID")
+display_recommendations(recommendations)`,
+                            swift: `// OTT Platform - tvOS (Swift)
+import Foundation
+import UIKit
+
+class RecommendationViewController: UIViewController {
+    let apiUrl = "http://YOUR_API_URL:8000/mixes/generate-recommendations"
+    var collectionView: UICollectionView!
+    var recommendations: [Recommendation] = []
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        setupCollectionView()
+        fetchRecommendations(mixId: "YOUR_MIX_ID", userId: "USER_ID")
+    }
+    
+    func fetchRecommendations(mixId: String, userId: String, topK: Int = 5, qualityLevel: Int = 2) {
+        var components = URLComponents(string: apiUrl)
+        components?.queryItems = [
+            URLQueryItem(name: "mix_id", value: mixId),
+            URLQueryItem(name: "user_id", value: userId),
+            URLQueryItem(name: "top_k", value: String(topK)),
+            URLQueryItem(name: "quality_level", value: String(qualityLevel))
+        ]
+        
+        guard let url = components?.url else { return }
+        
+        URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
+            guard let data = data, error == nil else {
+                print("Error: \\(error?.localizedDescription ?? "Unknown")")
+                return
+            }
+            
+            do {
+                let result = try JSONDecoder().decode(RecommendationResponse.self, from: data)
+                DispatchQueue.main.async {
+                    self?.recommendations = result.recommendations
+                    self?.collectionView.reloadData()
+                }
+            } catch {
+                print("Decode error: \\(error)")
+            }
+        }.resume()
+    }
+    
+    func setupCollectionView() {
+        let layout = UICollectionViewFlowLayout()
+        layout.itemSize = CGSize(width: 200, height: 300)
+        layout.scrollDirection = .vertical
+        
+        collectionView = UICollectionView(frame: view.bounds, collectionViewLayout: layout)
+        collectionView.dataSource = self
+        collectionView.delegate = self
+        collectionView.register(RecommendationCell.self, forCellWithReuseIdentifier: "Cell")
+        view.addSubview(collectionView)
+    }
+}
+
+extension RecommendationViewController: UICollectionViewDataSource, UICollectionViewDelegate {
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        recommendations.count
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "Cell", for: indexPath) as! RecommendationCell
+        cell.configure(with: recommendations[indexPath.item])
+        return cell
+    }
+}
+
+struct Recommendation: Codable {
+    let contentId: String
+    let title: String
+    let description: String?
+    let score: Double?
+    
+    enum CodingKeys: String, CodingKey {
+        case contentId = "content_id"
+        case title, description, score
+    }
+}
+
+struct RecommendationResponse: Codable {
+    let recommendations: [Recommendation]
+}`,
+                            tizen: `// OTT Platform - Tizen (Samsung Smart TV)
+// JavaScript/TypeScript for Tizen Web Application
+
+class RecommendationService {
+    private apiUrl = "http://YOUR_API_URL:8000/mixes/generate-recommendations";
+    
+    fetchRecommendations(mixId: string, userId: string, topK: number = 5, qualityLevel: number = 2): Promise<any[]> {
+        const params = new URLSearchParams();
+        params.append('mix_id', mixId);
+        params.append('user_id', userId);
+        params.append('top_k', topK.toString());
+        params.append('quality_level', qualityLevel.toString());
+        
+        const url = \`\${this.apiUrl}?\${params.toString()}\`;
+        
+        return fetch(url, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => data.recommendations || [])
+        .catch(error => {
+            console.error('Error fetching recommendations:', error);
+            return [];
+        });
+    }
+}
+
+// Tizen Widget HTML Structure
+class RecommendationWidget {
+    private service: RecommendationService;
+    
+    constructor() {
+        this.service = new RecommendationService();
+    }
+    
+    async loadRecommendations(mixId: string, userId: string) {
+        const container = document.getElementById('recommendation-container');
+        const recommendations = await this.service.fetchRecommendations(mixId, userId);
+        
+        const html = recommendations.map((rec, idx) => \`
+            <div class="recommendation-item" tabindex="0">
+                <h3>\${idx + 1}. \${rec.title}</h3>
+                <p>\${rec.description || ''}</p>
+                <span class="score">Score: \${(rec.score * 100).toFixed(1)}%</span>
+            </div>
+        \`).join('');
+        
+        container.innerHTML = html;
+        
+        // Enable TV remote navigation
+        this.setupRemoteNavigation();
+    }
+    
+    setupRemoteNavigation() {
+        const items = document.querySelectorAll('.recommendation-item');
+        let currentIndex = 0;
+        
+        document.addEventListener('keydown', (event) => {
+            if (event.keyCode === 37) { // Left
+                currentIndex = Math.max(0, currentIndex - 1);
+            } else if (event.keyCode === 39) { // Right
+                currentIndex = Math.min(items.length - 1, currentIndex + 1);
+            }
+            
+            items.forEach((item, idx) => {
+                item.classList.toggle('focused', idx === currentIndex);
+            });
+        });
+    }
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+    const widget = new RecommendationWidget();
+    widget.loadRecommendations('YOUR_MIX_ID', 'USER_ID');
+});`,
+                            java: `// OTT Platform - FireTV (Java)
+import android.os.Bundle;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.RecyclerView;
+import android.util.Log;
+import java.io.IOException;
+import java.util.List;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+public class RecommendationActivity extends AppCompatActivity {
+    private static final String API_URL = "http://YOUR_API_URL:8000/mixes/generate-recommendations";
+    private RecyclerView recyclerView;
+    private RecommendationAdapter adapter;
+    private OkHttpClient httpClient;
+    
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_recommendations);
+        
+        recyclerView = findViewById(R.id.recyclerView);
+        httpClient = new OkHttpClient();
+        adapter = new RecommendationAdapter();
+        recyclerView.setAdapter(adapter);
+        
+        fetchRecommendations("YOUR_MIX_ID", "USER_ID");
+    }
+    
+    private void fetchRecommendations(String mixId, String userId) {
+        new Thread(() -> {
+            try {
+                String url = API_URL + "?mix_id=" + mixId + "&user_id=" + userId 
+                    + "&top_k=5&quality_level=2";
+                
+                Request request = new Request.Builder()
+                    .url(url)
+                    .build();
+                
+                Response response = httpClient.newCall(request).execute();
+                
+                if (response.isSuccessful() && response.body() != null) {
+                    String jsonData = response.body().string();
+                    List<Recommendation> recommendations = parseRecommendations(jsonData);
+                    
+                    runOnUiThread(() -> {
+                        adapter.setRecommendations(recommendations);
+                    });
+                }
+            } catch (IOException e) {
+                Log.e("RecommendationAPI", "Error fetching recommendations", e);
+            }
+        }).start();
+    }
+    
+    private List<Recommendation> parseRecommendations(String jsonData) throws JSONException {
+        List<Recommendation> recommendations = new ArrayList<>();
+        JSONObject jsonObject = new JSONObject(jsonData);
+        JSONArray jsonArray = jsonObject.getJSONArray("recommendations");
+        
+        for (int i = 0; i < jsonArray.length(); i++) {
+            JSONObject obj = jsonArray.getJSONObject(i);
+            recommendations.add(new Recommendation(
+                obj.getString("content_id"),
+                obj.getString("title"),
+                obj.optString("description"),
+                obj.optDouble("score", 0.0)
+            ));
+        }
+        
+        return recommendations;
+    }
+}
+
+class Recommendation {
+    public String contentId;
+    public String title;
+    public String description;
+    public double score;
+    
+    public Recommendation(String contentId, String title, String description, double score) {
+        this.contentId = contentId;
+        this.title = title;
+        this.description = description;
+        this.score = score;
+    }
+}`,
+                            kotlin: `// OTT Platform - Android TV (Kotlin)
+import android.os.Bundle
+import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.RecyclerView
+import kotlinx.coroutines.*
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import org.json.JSONObject
+import java.io.IOException
+
+class RecommendationActivity : AppCompatActivity() {
+    private val apiUrl = "http://YOUR_API_URL:8000/mixes/generate-recommendations"
+    private lateinit var recyclerView: RecyclerView
+    private lateinit var adapter: RecommendationAdapter
+    private val httpClient = OkHttpClient()
+    private val scope = CoroutineScope(Dispatchers.Main + Job())
+    
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_recommendations)
+        
+        recyclerView = findViewById(R.id.recyclerView)
+        adapter = RecommendationAdapter()
+        recyclerView.adapter = adapter
+        
+        fetchRecommendations("YOUR_MIX_ID", "USER_ID")
+    }
+    
+    private fun fetchRecommendations(mixId: String, userId: String) {
+        scope.launch(Dispatchers.IO) {
+            try {
+                val url = "\$apiUrl?mix_id=\$mixId&user_id=\$userId&top_k=5&quality_level=2"
+                
+                val request = Request.Builder()
+                    .url(url)
+                    .build()
+                
+                val response = httpClient.newCall(request).execute()
+                
+                if (response.isSuccessful) {
+                    val body = response.body?.string() ?: return@launch
+                    val recommendations = parseRecommendations(body)
+                    
+                    withContext(Dispatchers.Main) {
+                        adapter.setRecommendations(recommendations)
+                    }
+                }
+            } catch (e: IOException) {
+                android.util.Log.e("RecommendationAPI", "Error fetching recommendations", e)
+            }
+        }
+    }
+    
+    private fun parseRecommendations(jsonData: String): List<Recommendation> {
+        val recommendations = mutableListOf<Recommendation>()
+        val jsonObject = JSONObject(jsonData)
+        val jsonArray = jsonObject.getJSONArray("recommendations")
+        
+        for (i in 0 until jsonArray.length()) {
+            val obj = jsonArray.getJSONObject(i)
+            recommendations.add(
+                Recommendation(
+                    contentId = obj.getString("content_id"),
+                    title = obj.getString("title"),
+                    description = obj.optString("description"),
+                    score = obj.optDouble("score", 0.0)
+                )
+            )
+        }
+        
+        return recommendations
+    }
+    
+    override fun onDestroy() {
+        super.onDestroy()
+        scope.cancel()
+    }
+}
+
+data class Recommendation(
+    val contentId: String,
+    val title: String,
+    val description: String,
+    val score: Double
+)`
+                        },
+                        app: {
+                            'react-native': `// App - React Native
+import { useState, useEffect } from 'react';
+import { View, FlatList, Text } from 'react-native';
+
+export function RecommendationList({ mixId, userId }) {
+  const [recommendations, setRecommendations] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchRecommendations();
+  }, [mixId, userId]);
+
+  const fetchRecommendations = async () => {
+    try {
+      const response = await fetch(
+        \`http://YOUR_API_URL:8000/mixes/generate-recommendations?mix_id=\${mixId}&user_id=\${userId}&top_k=5&quality_level=2\`
+      );
+      const data = await response.json();
+      setRecommendations(data.recommendations || []);
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const renderItem = ({ item, index }) => (
+    <View style={{ padding: 10, borderBottomWidth: 1 }}>
+      <Text style={{ fontWeight: 'bold' }}>{index + 1}. {item.title}</Text>
+      <Text>{item.description}</Text>
+      <Text>Score: {(item.score * 100).toFixed(1)}%</Text>
+    </View>
+  );
+
+  return (
+    <FlatList
+      data={recommendations}
+      renderItem={renderItem}
+      keyExtractor={(item) => item.content_id}
+      refreshing={loading}
+      onRefresh={fetchRecommendations}
+    />
+  );
+}`,
+                            swift: `// App - Swift (iOS)
+import Foundation
+
+class RecommendationService {
+    let apiUrl = "http://YOUR_API_URL:8000/mixes/generate-recommendations"
+    
+    func fetchRecommendations(mixId: String, userId: String, topK: Int = 5, qualityLevel: Int = 2, completion: @escaping ([Recommendation]?) -> Void) {
+        var components = URLComponents(string: apiUrl)
+        components?.queryItems = [
+            URLQueryItem(name: "mix_id", value: mixId),
+            URLQueryItem(name: "user_id", value: userId),
+            URLQueryItem(name: "top_k", value: String(topK)),
+            URLQueryItem(name: "quality_level", value: String(qualityLevel))
+        ]
+        
+        guard let url = components?.url else {
+            completion(nil)
+            return
+        }
+        
+        URLSession.shared.dataTask(with: url) { data, response, error in
+            guard let data = data, error == nil else {
+                print("Error: \\(error?.localizedDescription ?? "Unknown")")
+                completion(nil)
+                return
+            }
+            
+            do {
+                let result = try JSONDecoder().decode(RecommendationResponse.self, from: data)
+                completion(result.recommendations)
+            } catch {
+                print("Decode error: \\(error)")
+                completion(nil)
+            }
+        }.resume()
+    }
+}
+
+struct Recommendation: Codable {
+    let contentId: String
+    let title: String
+    let description: String?
+    let score: Double?
+    
+    enum CodingKeys: String, CodingKey {
+        case contentId = "content_id"
+        case title
+        case description
+        case score
+    }
+}
+
+struct RecommendationResponse: Codable {
+    let recommendations: [Recommendation]
+}`,
+                            kotlin: `// App - Kotlin (Android)
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.http.GET
+import retrofit2.http.Query
+
+interface RecommendationService {
+    @GET("mixes/generate-recommendations")
+    suspend fun getRecommendations(
+        @Query("mix_id") mixId: String,
+        @Query("user_id") userId: String,
+        @Query("top_k") topK: Int = 5,
+        @Query("quality_level") qualityLevel: Int = 2
+    ): RecommendationResponse
+}
+
+data class Recommendation(
+    val content_id: String,
+    val title: String,
+    val description: String?,
+    val score: Double?
+)
+
+data class RecommendationResponse(
+    val recommendations: List<Recommendation>
+)
+
+// Usage in ViewModel
+class RecommendationViewModel : ViewModel() {
+    private val retrofit = Retrofit.Builder()
+        .baseUrl("http://YOUR_API_URL:8000/")
+        .addConverterFactory(GsonConverterFactory.create())
+        .build()
+    
+    private val service = retrofit.create(RecommendationService::class.java)
+    
+    fun fetchRecommendations(mixId: String, userId: String) {
+        viewModelScope.launch {
+            try {
+                val response = service.getRecommendations(mixId, userId)
+                // Update UI with recommendations
+            } catch (e: Exception) {
+                // Handle error
+            }
+        }
+    }
+}`
+                        },
+                        web: {
+                            javascript: `// Web - JavaScript
+async function getRecommendations(mixId, userId, topK = 5, qualityLevel = 2) {
+  try {
+    const response = await fetch(
+      \`http://YOUR_API_URL:8000/mixes/generate-recommendations?mix_id=\${mixId}&user_id=\${userId}&top_k=\${topK}&quality_level=\${qualityLevel}\`
+    );
+    const data = await response.json();
+    return data.recommendations || [];
+  } catch (error) {
+    console.error('Error fetching recommendations:', error);
+    return [];
+  }
+}
+
+function renderRecommendations(recommendations) {
+  const container = document.getElementById('recommendations');
+  
+  const html = recommendations.map((rec, idx) => \`
+    <div class="recommendation-card">
+      <h3>\${idx + 1}. \${rec.title}</h3>
+      <p>\${rec.description || ''}</p>
+      <span class="score">Score: \${(rec.score * 100).toFixed(1)}%</span>
+    </div>
+  \`).join('');
+  
+  container.innerHTML = html;
+}
+
+// Usage
+getRecommendations('YOUR_MIX_ID', 'USER_ID').then(renderRecommendations);`,
+                            python: `# Web - Python (Flask)
+from flask import Flask, jsonify, request
+import requests
+
+app = Flask(__name__)
+
+@app.route('/api/recommendations')
+def get_recommendations():
+    mix_id = request.args.get('mix_id')
+    user_id = request.args.get('user_id')
+    top_k = request.args.get('top_k', 5, type=int)
+    quality_level = request.args.get('quality_level', 2, type=int)
+    
+    api_url = 'http://YOUR_API_URL:8000/mixes/generate-recommendations'
+    params = {
+        'mix_id': mix_id,
+        'user_id': user_id,
+        'top_k': top_k,
+        'quality_level': quality_level
+    }
+    
+    try:
+        response = requests.get(api_url, params=params, timeout=10)
+        response.raise_for_status()
+        return jsonify(response.json())
+    except requests.exceptions.RequestException as e:
+        return jsonify({'error': str(e)}), 500
+
+if __name__ == '__main__':
+    app.run(debug=True)`,
+                            nodejs: `// Web - Node.js (Express)
+const express = require('express');
+const axios = require('axios');
+
+const app = express();
+const API_URL = 'http://YOUR_API_URL:8000/mixes/generate-recommendations';
+
+app.get('/api/recommendations', async (req, res) => {
+  try {
+    const { mix_id, user_id, top_k = 5, quality_level = 2 } = req.query;
+    
+    const response = await axios.get(API_URL, {
+      params: {
+        mix_id,
+        user_id,
+        top_k,
+        quality_level
+      },
+      timeout: 10000
+    });
+    
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.listen(3000, () => {
+  console.log('Server running on port 3000');
+});`
+                        }
+                    };
+
+                    // Handle platform type change
+                    document.querySelectorAll('input[name="platformType"]').forEach(radio => {
+                        radio.addEventListener('change', (e) => {
+                            updateLanguageOptions(e.target.value);
+                            document.getElementById('codeContent').textContent = ''; // Clear code box
+                        });
+                    });
+
+                    // Update language options based on selected platform
+                    function updateLanguageOptions(platformType) {
+                        const languageContainer = document.getElementById('languageOptions');
+                        languageContainer.innerHTML = ''; // Clear existing options
+
+                        const languages = platformLanguages[platformType] || {};
+
+                        Object.entries(languages).forEach(([key, label], index) => {
+                            const radioId = `lang-${platformType}-${key}`;
+
+                            const radio = document.createElement('input');
+                            radio.type = 'radio';
+                            radio.className = 'btn-check';
+                            radio.name = 'language';
+                            radio.id = radioId;
+                            radio.value = key;
+                            if (index === 0) radio.checked = true;
+
+                            const label_elem = document.createElement('label');
+                            label_elem.className = 'btn btn-outline-success';
+                            label_elem.htmlFor = radioId;
+                            label_elem.textContent = label;
+
+                            languageContainer.appendChild(radio);
+                            languageContainer.appendChild(label_elem);
+                        });
+                    }
+
+                    // Handle language change
+                    document.addEventListener('change', (e) => {
+                        if (e.target.name === 'language') {
+                            document.getElementById('codeContent').textContent = ''; // Clear code box
+                        }
+                    });
+
+                    // Generate code button
+                    document.getElementById('generateCodeBtn').addEventListener('click', () => {
+                        const platformType = document.querySelector('input[name="platformType"]:checked').value;
+                        const language = document.querySelector('input[name="language"]:checked').value;
+                        const codeContent = document.getElementById('codeContent');
+
+                        let code = codeSamples[platformType]?.[language] || 'Code not found';
+
+                        // Replace quality_level=2 with the current mix's quality level
+                        const currentQualityLevel = selectedQualityLevel || '2';
+                        code = code.replace(/quality_level\s*=\s*2\b/g, `quality_level = ${currentQualityLevel}`);
+                        code = code.replace(/quality_level=2\b/g, `quality_level=${currentQualityLevel}`);
+                        code = code.replace(/qualityLevel\s*:\s*Int\s*=\s*2\b/g, `qualityLevel: Int = ${currentQualityLevel}`);
+                        code = code.replace(/qualityLevel\s*:\s*Int\??\s*=\s*2\b/g, `qualityLevel: Int? = ${currentQualityLevel}`);
+                        code = code.replace(/qualityLevel\s*:\s*Int\s*=\s*2\b/g, `qualityLevel: Int = ${currentQualityLevel}`);
+
+                        codeContent.textContent = code;
+                    });
+
+                    // Initialize with OTT platform
+                    updateLanguageOptions('ott');
+
+                    // ==========================================
+                    // SUPABASE CONFIGURATION
+                    // ==========================================
+                    const SUPABASE_URL = 'https://nhugicjyxnxiccmpenzs.supabase.co';
+                    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5odWdpY2p5eG54aWNjbXBlbnpzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ2OTMxNTAsImV4cCI6MjA4MDI2OTE1MH0.uQ41mShGieG32gSJolAyjMhtpT3r9TtZevVMm19eB58';
+
+                    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+                    // ==========================================
+                    // AUTHENTICATION STATE MANAGEMENT
+                    // ==========================================
+
+                    let authState = {
+                        isAuthenticated: false,
+                        user: null
+                    };
+
+                    // Check for existing session on page load
+                    async function checkSession() {
+                        const { data: { session } } = await supabase.auth.getSession();
+                        if (session) {
+                            authState.isAuthenticated = true;
+                            authState.user = {
+                                id: session.user.id,
+                                email: session.user.email,
+                                username: session.user.email.split('@')[0]
+                            };
+                            console.log('Existing session found:', authState.user);
+                            // Load user's mixes from API
+                            await loadMixesFromAPI();
+                        }
+                        updateAuthUI();
+                    }
+
+                    // Listen for auth state changes
+                    supabase.auth.onAuthStateChange((event, session) => {
+                        console.log('Auth state changed:', event);
+                        if (session) {
+                            authState.isAuthenticated = true;
+                            authState.user = {
+                                id: session.user.id,
+                                email: session.user.email,
+                                username: session.user.email.split('@')[0]
+                            };
+                            // Load user's mixes from API when they log in
+                            loadMixesFromAPI();
+                        } else {
+                            authState.isAuthenticated = false;
+                            authState.user = null;
+                            // Clear mixes when user logs out
+                            const mixesList = document.getElementById('mixesList');
+                            const mobileMixesList = document.getElementById('mobileMixesList');
+                            if (mixesList) mixesList.innerHTML = '';
+                            if (mobileMixesList) mobileMixesList.innerHTML = '';
+                        }
+                        updateAuthUI();
+                    });
+
+                    function updateAuthUI() {
+                        console.log('updateAuthUI called, isAuthenticated:', authState.isAuthenticated);
+
+                        const authenticatedNav = document.getElementById('authenticatedNav');
+                        const unauthenticatedNav = document.getElementById('unauthenticatedNav');
+                        const userDisplayName = document.getElementById('userDisplayName');
+                        const mainContent = document.querySelector('main > div.container-fluid');
+                        const sidebar = document.getElementById('mainSidebar');
+                        const mobileSidebarContent = document.getElementById('mobileSidebarContent');
+
+                        if (authState.isAuthenticated && authState.user) {
+                            authenticatedNav.style.display = 'block';
+                            unauthenticatedNav.style.display = 'none';
+                            if (userDisplayName) userDisplayName.textContent = authState.user.email || authState.user.username;
+                            if (mainContent) mainContent.style.display = 'block';
+                            if (sidebar) {
+                                sidebar.style.display = 'flex';
+                                sidebar.classList.add('d-flex');
+                            }
+                            if (mobileSidebarContent) {
+                                mobileSidebarContent.style.display = '';
+                            }
+                        } else {
+                            authenticatedNav.style.display = 'none';
+                            unauthenticatedNav.style.display = 'block';
+                            if (mainContent) mainContent.style.display = 'none';
+                            if (sidebar) {
+                                sidebar.style.display = 'none';
+                                sidebar.classList.remove('d-flex');
+                            }
+                            if (mobileSidebarContent) {
+                                mobileSidebarContent.style.display = 'none';
+                            }
+                        }
+                    }
+
+                    async function handleLogin() {
+                        const email = document.getElementById('username').value.trim();
+                        const password = document.getElementById('password').value.trim();
+
+                        console.log('Login attempt:', email);
+
+                        if (!email || !password) {
+                            alert('Please enter both email and password');
+                            return;
+                        }
+
+                        try {
+                            const { data, error } = await supabase.auth.signInWithPassword({
+                                email: email,
+                                password: password
+                            });
+
+                            if (error) {
+                                console.error('Login error:', error.message);
+                                alert('Login failed: ' + error.message);
+                                return;
+                            }
+
+                            console.log('Logged in:', data.user);
+
+                            // Close modal and clear form
+                            document.getElementById('loginForm').reset();
+
+                            const modalElement = document.getElementById('loginModal');
+                            const modal = bootstrap.Modal.getInstance(modalElement);
+                            if (modal) {
+                                modal.hide();
+                            }
+
+                            // Remove any leftover backdrop and body classes
+                            setTimeout(() => {
+                                const backdrop = document.querySelector('.modal-backdrop');
+                                if (backdrop) backdrop.remove();
+                                document.body.classList.remove('modal-open');
+                                document.body.style.overflow = '';
+                                document.body.style.paddingRight = '';
+                            }, 300);
+
+                        } catch (err) {
+                            console.error('Login error:', err);
+                            alert('An error occurred during login');
+                        }
+                    }
+
+                    async function handleLogout() {
+                        console.log('Logging out...');
+
+                        try {
+                            const { error } = await supabase.auth.signOut();
+                            if (error) {
+                                console.error('Logout error:', error.message);
+                            }
+                            console.log('Logged out');
+                        } catch (err) {
+                            console.error('Logout error:', err);
+                        }
+
+                        // Hide dropdown
+                        const menu = document.getElementById('customDropdownMenu');
+                        if (menu) menu.style.display = 'none';
+                    }
+
+                    // Sign up function (optional - for creating new users)
+                    async function handleSignUp() {
+                        const email = document.getElementById('username').value.trim();
+                        const password = document.getElementById('password').value.trim();
+
+                        if (!email || !password) {
+                            alert('Please enter both email and password');
+                            return;
+                        }
+
+                        try {
+                            const { data, error } = await supabase.auth.signUp({
+                                email: email,
+                                password: password
+                            });
+
+                            if (error) {
+                                console.error('Sign up error:', error.message);
+                                alert('Sign up failed: ' + error.message);
+                                return;
+                            }
+
+                            alert('Sign up successful! Please check your email to confirm your account.');
+                            console.log('Signed up:', data.user);
+
+                        } catch (err) {
+                            console.error('Sign up error:', err);
+                            alert('An error occurred during sign up');
+                        }
+                    }
+
+                    // Setup event listeners
+                    document.addEventListener('DOMContentLoaded', () => {
+                        console.log('DOM ready, initializing auth...');
+
+                        // Check for existing Supabase session
+                        checkSession();
+
+                        // Login form submission
+                        const loginForm = document.getElementById('loginForm');
+                        if (loginForm) {
+                            loginForm.addEventListener('submit', (e) => {
+                                e.preventDefault();
+                                handleLogin();
+                            });
+                        }
+
+                        // Submit login button
+                        const submitLoginBtn = document.getElementById('submitLoginBtn');
+                        if (submitLoginBtn) {
+                            submitLoginBtn.addEventListener('click', (e) => {
+                                e.preventDefault();
+                                handleLogin();
+                            });
+                        }
+
+                        // Logout button - use event delegation for dropdown item
+                        document.body.addEventListener('click', (e) => {
+                            if (e.target && e.target.id === 'logoutBtn') {
+                                e.preventDefault();
+                                console.log('Logout clicked');
+                                handleLogout();
+                                // Hide dropdown after logout
+                                const menu = document.getElementById('customDropdownMenu');
+                                if (menu) menu.style.display = 'none';
+                            }
+                        });
+
+                        // Custom dropdown toggle
+                        const dropdownToggle = document.getElementById('userDropdownToggle');
+                        const dropdownMenu = document.getElementById('customDropdownMenu');
+
+                        if (dropdownToggle && dropdownMenu) {
+                            dropdownToggle.addEventListener('click', (e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                console.log('Dropdown toggle clicked');
+                                if (dropdownMenu.style.display === 'none' || dropdownMenu.style.display === '') {
+                                    dropdownMenu.style.display = 'block';
+                                } else {
+                                    dropdownMenu.style.display = 'none';
+                                }
+                            });
+                        }
+
+                        // Close dropdown when clicking outside
+                        document.addEventListener('click', (e) => {
+                            const menu = document.getElementById('customDropdownMenu');
+                            const toggle = document.getElementById('userDropdownToggle');
+                            if (menu && toggle && !toggle.contains(e.target) && !menu.contains(e.target)) {
+                                menu.style.display = 'none';
+                            }
+                        });
+
+                        console.log('Auth system initialized');
+                    });
+
+                </script>
+</body>
+
+</html>
