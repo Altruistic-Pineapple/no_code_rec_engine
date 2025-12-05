@@ -58,8 +58,16 @@ app.include_router(simulate_watch_data.router, prefix="/mixes")
 app.include_router(users.router)
 app.include_router(user_activity.router)
 
-# Create all database tables if they don't exist yet
-Base.metadata.create_all(bind=engine)
+# Startup event to create tables after app is ready
+@app.on_event("startup")
+async def startup_event():
+    """Create database tables on startup"""
+    try:
+        Base.metadata.create_all(bind=engine)
+        print("Database tables created successfully")
+    except Exception as e:
+        print(f"Warning: Could not create tables: {e}")
+        # Don't fail startup if tables already exist
 
 for route in app.routes:
     print(route.path)

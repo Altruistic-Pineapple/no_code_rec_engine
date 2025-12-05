@@ -11,7 +11,17 @@ DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///mixes.db")
 
 # Create the engine - different configs for PostgreSQL vs SQLite
 if DATABASE_URL.startswith("postgresql"):
-    engine = create_engine(DATABASE_URL)
+    # Add connect_args to prefer IPv4 and set connection timeout
+    engine = create_engine(
+        DATABASE_URL,
+        connect_args={
+            "connect_timeout": 10,
+            "options": "-c client_encoding=utf8"
+        },
+        pool_pre_ping=True,  # Verify connections before using
+        pool_size=5,
+        max_overflow=10
+    )
 else:
     # SQLite needs check_same_thread=False for FastAPI
     engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
