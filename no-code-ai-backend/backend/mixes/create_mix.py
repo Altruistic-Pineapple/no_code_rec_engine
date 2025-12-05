@@ -11,6 +11,7 @@ router = APIRouter()
 class MixCreateRequest(BaseModel):
     title: str
     quality_level: int = 2  # Default to Level 2 (1, 2, or 3)
+    user_id: str = None  # Owner of this mix (Supabase user ID)
 
 # DB dependency
 def get_db():
@@ -25,6 +26,7 @@ def create_mix(request: MixCreateRequest, db: Session = Depends(get_db)):
     mix_id = str(uuid.uuid4())
     new_mix = models.Mix(
         id=mix_id,
+        user_id=request.user_id,
         title=request.title,
         status="draft",
         quality_level=str(request.quality_level)
@@ -34,6 +36,7 @@ def create_mix(request: MixCreateRequest, db: Session = Depends(get_db)):
     db.refresh(new_mix)
     return {
         "mix_id": new_mix.id,
+        "user_id": new_mix.user_id,
         "title": new_mix.title,
         "status": new_mix.status,
         "quality_level": int(new_mix.quality_level)

@@ -11,7 +11,8 @@ router = APIRouter()
 
 
 class UpdateMixRequest(BaseModel):
-    quality_level: int
+    quality_level: int = None
+    title: str = None
 
 
 @router.get("/{mix_id}")
@@ -33,16 +34,22 @@ def get_mix(mix_id: str, db: Session = Depends(get_db)):
 
 @router.put("/{mix_id}/update")
 def update_mix(mix_id: str, request: UpdateMixRequest, db: Session = Depends(get_db)):
-    """Update a mix's quality level."""
+    """Update a mix's title and/or quality level."""
     mix = db.query(models.Mix).filter(models.Mix.id == mix_id).first()
     
     if not mix:
         raise HTTPException(status_code=404, detail="Mix not found")
     
-    if request.quality_level not in [1, 2, 3]:
-        raise HTTPException(status_code=400, detail="Quality level must be 1, 2, or 3")
+    # Update quality level if provided
+    if request.quality_level is not None:
+        if request.quality_level not in [1, 2, 3]:
+            raise HTTPException(status_code=400, detail="Quality level must be 1, 2, or 3")
+        mix.quality_level = str(request.quality_level)
     
-    mix.quality_level = str(request.quality_level)
+    # Update title if provided
+    if request.title is not None:
+        mix.title = request.title
+    
     db.commit()
     db.refresh(mix)
     

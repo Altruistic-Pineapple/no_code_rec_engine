@@ -16,6 +16,7 @@ router = APIRouter()
 # GET route to return a list of mixes with optional filters
 @router.get("/")
 def list_mixes(
+    user_id: Optional[str] = None,
     title: Optional[str] = None,
     q: Optional[str] = None,
     status: Optional[str] = None,
@@ -25,12 +26,17 @@ def list_mixes(
 ):
     """List mixes with optional filters:
 
+    - user_id: filter by owner (required for user-specific mixes)
     - title: case-insensitive substring match on mix title
     - q: space-separated keywords; all keywords must be present in title (AND)
     - status: exact match on mix status
     - created_after / created_before: ISO datetimes to filter by created_at
     """
     qry = db.query(models.Mix)
+    
+    # Filter by user_id if provided
+    if user_id:
+        qry = qry.filter(models.Mix.user_id == user_id)
 
     # title substring filter (legacy/single string)
     if title:

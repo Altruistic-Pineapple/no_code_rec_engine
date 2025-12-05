@@ -8,6 +8,7 @@ class Mix(Base):
     __tablename__ = "mixes"
 
     id = Column(String, primary_key=True, index=True)
+    user_id = Column(String, nullable=True, index=True)  # Owner of this mix (Supabase user ID)
     title = Column(String, nullable=False, index=True)
     status = Column(String, nullable=False, index=True)
     filename = Column(String, nullable=True)

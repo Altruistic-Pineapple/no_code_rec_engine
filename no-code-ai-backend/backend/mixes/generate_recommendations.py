@@ -67,6 +67,7 @@ async def generate_recommendations(mix_id: str, user_id: str = None, content_id:
                 "content_id": r.content_id,
                 "title": r.title,
                 "description": r.description,
+                "tags": r.tags,
             }
             for r in rows
         ])
@@ -106,9 +107,17 @@ async def generate_recommendations(mix_id: str, user_id: str = None, content_id:
     if "content_id" not in df.columns:
         raise HTTPException(400, detail="Mapped column 'content_id' is required but missing after rename.")
 
+    # Build the text field for similarity - include title, description, AND tags/genre
+    # This ensures the LLM embeddings understand genre relationships
     title = df["title"] if "title" in df.columns else pd.Series([""] * len(df))
     desc = df["description"] if "description" in df.columns else pd.Series([""] * len(df))
-    df["text"] = title.fillna("") + " " + desc.fillna("")
+    tags = df["tags"] if "tags" in df.columns else pd.Series([""] * len(df))
+    
+    # Repeat tags 3x to give genre more weight in the embedding
+    tags_weighted = tags.fillna("").apply(lambda x: f"{x} {x} {x}" if x else "")
+    df["text"] = title.fillna("") + " " + desc.fillna("") + " " + tags_weighted
+    
+    print(f"DEBUG: Sample text for embedding: {df['text'].iloc[0][:200] if len(df) > 0 else 'empty'}")
 
     if df.empty:
         raise HTTPException(400, detail="No content available")
@@ -130,57 +139,20 @@ async def generate_recommendations(mix_id: str, user_id: str = None, content_id:
         print(f"DEBUG Level 3: Computed {len(embeddings)} semantic embeddings")
     else:
         # Level 1 & 2: Use TF-IDF
-        # Try to load persisted embeddings for this mix (matched by content_id)
-        embeddings_rows = db.query(Embedding).filter(Embedding.mix_id == mix_id).all()
-
-        use_persisted = False
-        if embeddings_rows:
-            # build a map content_id -> vector
-            emb_map = {}
-            try:
-                for r in embeddings_rows:
-                    arr = np.load(BytesIO(r.vector), allow_pickle=False)
-                    emb_map[r.content_id] = arr
-            except Exception:
-                emb_map = {}
-
-            if len(emb_map) == len(df):
-                vectors = []
-                all_present = True
-                for _, row in df.iterrows():
-                    cid = row.get("content_id")
-                    if cid not in emb_map:
-                        all_present = False
-                        break
-                    vectors.append(emb_map[cid])
-
-                if all_present:
-                    tfidf = np.vstack(vectors)
-                    sim = cosine_similarity(tfidf)
-                    use_persisted = True
-
-        if not use_persisted:
-            # compute tf-idf and persist vectors for later
-            tfidf_sparse = TfidfVectorizer().fit_transform(df["text"])
-            try:
-                tfidf = tfidf_sparse.toarray()
-            except Exception:
-                # fallback: convert each row
-                tfidf = np.vstack([row.toarray().ravel() for row in tfidf_sparse])
-            sim = cosine_similarity(tfidf)
-
-            # persist embeddings (overwrite existing for this mix)
-            try:
-                db.query(Embedding).filter(Embedding.mix_id == mix_id).delete()
-                for idx, row in df.iterrows():
-                    vec = tfidf[idx]
-                    buf = BytesIO()
-                    np.save(buf, vec, allow_pickle=False)
-                    emb = Embedding(mix_id=mix_id, content_id=row.get("content_id"), vector=buf.getvalue())
-                    db.add(emb)
-                db.commit()
-            except Exception:
-                db.rollback()
+        # Clear old embeddings and recompute fresh to ensure tags/genre are included
+        # This is important after algorithm updates that change the text field
+        print(f"DEBUG Level {quality_level}: Computing TF-IDF with genre-weighted text...")
+        
+        # Always recompute TF-IDF to ensure we use the latest text (with tags)
+        tfidf_sparse = TfidfVectorizer().fit_transform(df["text"])
+        try:
+            tfidf = tfidf_sparse.toarray()
+        except Exception:
+            # fallback: convert each row
+            tfidf = np.vstack([row.toarray().ravel() for row in tfidf_sparse])
+        sim = cosine_similarity(tfidf)
+        
+        print(f"DEBUG Level {quality_level}: Computed TF-IDF for {len(df)} items")
 
     if content_id is None:
         # If user_id provided, get their most recent watching activity
