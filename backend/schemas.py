@@ -1,21 +1,34 @@
 # --- backend/schemas.py ---
-from pydantic import BaseModel
-from typing import Optional
+from pydantic import BaseModel, ConfigDict, model_validator
+from typing import Optional, Any
 from datetime import datetime
 
 # Schema for creating a new user (request body)
 class UserCreate(BaseModel):
-    name: str
-    user_metadata: Optional[str] = None  # Optional extra data about the user
+    name: Optional[str] = None
+    supabase_user_id: Optional[str] = None  # Will be auto-generated if not provided
+    email: Optional[str] = None  # Will be auto-generated if not provided
 
 # Schema for reading a user (response model)
 class UserRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
     id: str
-    name: str
-    user_metadata: Optional[str] = None
-
-    class Config:
-        from_attributes = True  # Allows Pydantic to work with SQLAlchemy models
+    name: Optional[str] = None
+    email: Optional[str] = None
+    supabase_user_id: Optional[str] = None
+    
+    @model_validator(mode='before')
+    @classmethod
+    def convert_uuid(cls, data: Any) -> Any:
+        if hasattr(data, '__dict__'):
+            # SQLAlchemy model - convert id to string
+            result = {}
+            for key in ['id', 'name', 'email', 'supabase_user_id']:
+                value = getattr(data, key, None)
+                result[key] = str(value) if value is not None else None
+            return result
+        return data
 class UserActivityCreate(BaseModel):
     user_id: str
     mix_id: str

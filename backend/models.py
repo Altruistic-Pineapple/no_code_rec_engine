@@ -1,4 +1,5 @@
 from sqlalchemy import Column, String, JSON, DateTime, ForeignKey, Index, LargeBinary
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.sql import func
 from backend.database import Base
 import uuid
@@ -19,11 +20,11 @@ class Mix(Base):
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    supabase_user_id = Column(String, nullable=True)
-    email = Column(String, nullable=True)
-    name = Column(String, nullable=True)
-    subscription_status = Column(String, nullable=True)
+    id = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, server_default=func.gen_random_uuid())
+    supabase_user_id = Column(String, nullable=False)  # Required by Supabase
+    email = Column(String, nullable=False)  # Required by Supabase
+    name = Column(String(255), nullable=True)
+    subscription_status = Column(String, nullable=True, server_default="inactive")
     stripe_customer_id = Column(String, nullable=True)
     stripe_subscription_id = Column(String, nullable=True)
     stripe_subscription_item_id = Column(String, nullable=True)
