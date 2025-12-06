@@ -1,7 +1,8 @@
 # --- backend/schemas.py ---
-from pydantic import BaseModel, ConfigDict, model_validator
-from typing import Optional, Any
+from pydantic import BaseModel, ConfigDict, field_serializer
+from typing import Optional
 from datetime import datetime
+from uuid import UUID
 
 # Schema for creating a new user (request body)
 class UserCreate(BaseModel):
@@ -11,16 +12,12 @@ class UserCreate(BaseModel):
 class UserRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     
-    id: str
+    id: UUID
     name: Optional[str] = None
     
-    @model_validator(mode='before')
-    @classmethod
-    def convert_uuid(cls, data: Any) -> Any:
-        if hasattr(data, 'id'):
-            # SQLAlchemy model - convert id to string
-            return {'id': str(data.id), 'name': data.name}
-        return data
+    @field_serializer('id')
+    def serialize_id(self, value: UUID) -> str:
+        return str(value)
 class UserActivityCreate(BaseModel):
     user_id: str
     mix_id: str
