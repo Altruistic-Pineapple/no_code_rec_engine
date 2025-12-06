@@ -68,12 +68,19 @@ app.include_router(user_activity.router)
 @app.on_event("startup")
 async def startup_event():
     """Create database tables on startup"""
+    from sqlalchemy import inspect
     try:
-        Base.metadata.create_all(bind=engine)
-        print("Database tables created successfully")
+        # Check if we can connect before trying to create tables
+        inspector = inspect(engine)
+        tables = inspector.get_table_names()
+        print(f"Connected to database. Found {len(tables)} existing tables.")
+        
+        # Only create tables if they don't exist
+        Base.metadata.create_all(bind=engine, checkfirst=True)
+        print("Database tables ready")
     except Exception as e:
-        print(f"Warning: Could not create tables: {e}")
-        # Don't fail startup if tables already exist
+        print(f"Warning: Database initialization issue: {e}")
+        # Continue anyway - tables might already exist
 
 for route in app.routes:
     print(route.path)
