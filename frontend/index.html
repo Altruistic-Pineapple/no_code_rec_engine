@@ -296,6 +296,9 @@
                     </div>
                 </div>
                 <script>
+                    // API Configuration
+                    const API_BASE_URL = "https://mixtape-edyc.onrender.com";
+                    
                     // User initialization
                     let currentUserId = null;
 
@@ -314,7 +317,7 @@
 
                             // Create a new user
                             const userId = 'user-' + Date.now();
-                            const response = await fetch('http://127.0.0.1:8000/users', {
+                            const response = await fetch(`${API_BASE_URL}/users`, {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({ user_id: userId })
@@ -368,7 +371,7 @@
                     // Load mix's quality level from backend and update slider
                     async function loadMixQualityLevel(mixId) {
                         try {
-                            const response = await fetch(`http://127.0.0.1:8000/mixes/${mixId}`);
+                            const response = await fetch(`${API_BASE_URL}/mixes/${mixId}`);
                             if (response.ok) {
                                 const data = await response.json();
                                 const qualityLevel = data.quality_level || '2';
@@ -390,7 +393,7 @@
                     // Update mix's quality level in backend
                     async function updateMixQualityLevel(mixId, qualityLevel) {
                         try {
-                            await fetch(`http://127.0.0.1:8000/mixes/${mixId}/update`, {
+                            await fetch(`${API_BASE_URL}/mixes/${mixId}/update`, {
                                 method: 'PUT',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({ quality_level: parseInt(qualityLevel) })
@@ -420,7 +423,7 @@
                             const mixQualityLevel = parseInt(selectedQualityLevel) || 2;
 
                             // Simulate user watch data
-                            const simulateResponse = await fetch('http://127.0.0.1:8000/mixes/simulate-watch-data', {
+                            const simulateResponse = await fetch(`${API_BASE_URL}/mixes/simulate-watch-data`, {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({ mix_id: mixId })
@@ -429,7 +432,7 @@
                             const testUserId = simulateData.user_id;
 
                             // Test only the selected quality level for this mix - fetch 100 items
-                            const url = `http://127.0.0.1:8000/mixes/generate-recommendations?mix_id=${mixId}&user_id=${testUserId}&top_k=100&quality_level=${mixQualityLevel}`;
+                            const url = `${API_BASE_URL}/mixes/generate-recommendations?mix_id=${mixId}&user_id=${testUserId}&top_k=100&quality_level=${mixQualityLevel}`;
                             const response = await fetch(url);
                             const data = await response.json();
 
@@ -514,7 +517,7 @@
 
                                         try {
                                             // Record user activity with correct field names
-                                            await fetch('http://127.0.0.1:8000/user-activity', {
+                                            await fetch(`${API_BASE_URL}/user-activity`, {
                                                 method: 'POST',
                                                 headers: { 'Content-Type': 'application/json' },
                                                 body: JSON.stringify({
@@ -581,7 +584,7 @@
                         if (!mixId) return;
 
                         try {
-                            const response = await fetch(`http://127.0.0.1:8000/mixes/get-rules?mix_id=${mixId}`);
+                            const response = await fetch(`${API_BASE_URL}/mixes/get-rules?mix_id=${mixId}`);
                             const data = await response.json();
                             currentRules = data.rules;
                             renderRules();
@@ -760,7 +763,7 @@
                         }
 
                         try {
-                            const response = await fetch(`http://127.0.0.1:8000/mixes/set-rules?mix_id=${mixId}`, {
+                            const response = await fetch(`${API_BASE_URL}/mixes/set-rules?mix_id=${mixId}`, {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify(currentRules)
@@ -784,7 +787,7 @@
                         if (!mixId) return;
 
                         try {
-                            await fetch(`http://127.0.0.1:8000/mixes/delete-rules?mix_id=${mixId}`, {
+                            await fetch(`${API_BASE_URL}/mixes/delete-rules?mix_id=${mixId}`, {
                                 method: 'DELETE'
                             });
 
@@ -832,7 +835,7 @@
                             // Get the logged-in user's ID
                             const userId = authState.user ? authState.user.id : null;
 
-                            const response = await fetch('http://127.0.0.1:8000/mixes/create', {
+                            const response = await fetch(`${API_BASE_URL}/mixes/create`, {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({ title: defaultName, quality_level: 2, user_id: userId })
@@ -880,7 +883,7 @@
 
                             try {
                                 // Save to backend database
-                                const response = await fetch(`http://127.0.0.1:8000/mixes/${mixId}/update`, {
+                                const response = await fetch(`${API_BASE_URL}/mixes/${mixId}/update`, {
                                     method: 'PUT',
                                     headers: { 'Content-Type': 'application/json' },
                                     body: JSON.stringify({ title: trimmedName })
@@ -1034,7 +1037,7 @@
                         }
 
                         try {
-                            const response = await fetch(`http://127.0.0.1:8000/mixes/?user_id=${authState.user.id}`);
+                            const response = await fetch(`${API_BASE_URL}/mixes/?user_id=${authState.user.id}`);
                             if (response.ok) {
                                 const mixes = await response.json();
                                 console.log('Loaded mixes from API:', mixes);
@@ -1181,7 +1184,7 @@
                             formData.append('mix_id', mixId);
                             formData.append('file', file);
 
-                            const response = await fetch('http://127.0.0.1:8000/mixes/upload-content', {
+                            const response = await fetch(`${API_BASE_URL}/mixes/upload-content`, {
                                 method: 'POST',
                                 body: formData
                             });
@@ -1248,7 +1251,7 @@
                         }
 
                         try {
-                            const response = await fetch('http://127.0.0.1:8000/mixes/map-fields', {
+                            const response = await fetch(`${API_BASE_URL}/mixes/map-fields`, {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({
@@ -1263,7 +1266,7 @@
 
                             // Store items for recommendations
                             try {
-                                const recsResponse = await fetch(`http://127.0.0.1:8000/mixes/generate-recommendations?mix_id=${mixId}&top_k=100`);
+                                const recsResponse = await fetch(`${API_BASE_URL}/mixes/generate-recommendations?mix_id=${mixId}&top_k=100`);
                                 const recsData = await recsResponse.json();
                                 localStorage.setItem('mixItems', JSON.stringify(recsData.all_items || []));
                             } catch (e) {
@@ -1292,7 +1295,7 @@
                             statusSpan.textContent = 'Generating recommendations...';
 
                             // Fetch viewing history for current user
-                            const historyResponse = await fetch(`http://127.0.0.1:8000/user-activity/by-user/${currentUserId}`);
+                            const historyResponse = await fetch(`${API_BASE_URL}/user-activity/by-user/${currentUserId}`);
                             const historyData = await historyResponse.json();
 
                             let contentId = null;
@@ -1317,7 +1320,7 @@
                             }
 
                             // Generate recommendations with quality level and user_id
-                            const url = `http://127.0.0.1:8000/mixes/generate-recommendations?mix_id=${mixId}&content_id=${contentId}&top_k=${topK}&quality_level=${qualityLevel}&user_id=${currentUserId}`;
+                            const url = `${API_BASE_URL}/mixes/generate-recommendations?mix_id=${mixId}&content_id=${contentId}&top_k=${topK}&quality_level=${qualityLevel}&user_id=${currentUserId}`;
                             const response = await fetch(url);
                             const data = await response.json();
 
