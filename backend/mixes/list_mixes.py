@@ -50,13 +50,13 @@ def list_mixes(
             qry = qry.filter(models.Mix.title.ilike(f"%{kw}%"))
 
     if status:
-        q = q.filter(models.Mix.status == status)
+        qry = qry.filter(models.Mix.status == status)
 
     if created_after:
-        q = q.filter(models.Mix.created_at >= created_after)
+        qry = qry.filter(models.Mix.created_at >= created_after)
 
     if created_before:
-        q = q.filter(models.Mix.created_at <= created_before)
+        qry = qry.filter(models.Mix.created_at <= created_before)
 
     mixes = qry.all()
 
