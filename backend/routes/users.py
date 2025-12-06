@@ -11,21 +11,10 @@ router = APIRouter(prefix="/users", tags=["users"])
 # POST /users - Create a new user
 @router.post("", response_model=UserRead)
 def create_user(payload: UserCreate, db: Session = Depends(get_db)):
-    import uuid as uuid_module
-    # Auto-generate required fields if not provided
-    user_id = str(uuid_module.uuid4())
-    supabase_user_id = payload.supabase_user_id or f"anonymous_{user_id[:8]}"
-    email = payload.email or f"user_{user_id[:8]}@example.com"
-    name = payload.name or f"User {user_id[:8]}"
-    
-    user = models.User(
-        supabase_user_id=supabase_user_id,
-        email=email,
-        name=name
-    )
-    db.add(user)       # Stage new user in DB session
-    db.commit()        # Save changes to DB
-    db.refresh(user)   # Refresh object to get DB-generated values (like ID)
+    user = models.User(name=payload.name)
+    db.add(user)
+    db.commit()
+    db.refresh(user)
     return user
 
 # GET /users - List all users
