@@ -46,7 +46,12 @@ async def simulate_watch_data(payload: dict, db: Session = Depends(get_db)):
             user_id=test_user_id,
             mix_id=mix_id,
             content_id=item.content_id,
-            event_type="watched"
+            event_type="watched",
+            duration="120",  # Simulated 2 minute watch
+            rating=None,
+            session_id=None,
+            sequence_order=None,
+            context_data=None
         )
         db.add(activity)
     
