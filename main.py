@@ -21,7 +21,6 @@ from backend.routes import sessions
 
 # Import database setup
 from backend.database import Base, engine
-from backend.routes import user_activity
 
 
 

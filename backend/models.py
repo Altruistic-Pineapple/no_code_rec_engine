@@ -50,7 +50,7 @@ class UserActivity(Base):
     sequence_order = Column(String, nullable=True)  # Order within session
     
     # Additional context
-    metadata = Column(JSON, nullable=True)  # Device, location, time of day, etc.
+    context_data = Column(JSON, nullable=True)  # Device, location, time of day, etc.
 
 # Composite indexes for user activity
 Index("ix_user_mix_time", UserActivity.user_id, UserActivity.mix_id, UserActivity.timestamp.desc())
@@ -84,7 +84,7 @@ class WatchSession(Base):
     end_time = Column(DateTime, nullable=True)
     device_type = Column(String, nullable=True)
     total_items_viewed = Column(String, nullable=True, default="0")
-    metadata = Column(JSON, nullable=True)
+    context_data = Column(JSON, nullable=True)
 
 # --- Uploaded content tied to a mix (one row per item) ---
 class MixContent(Base):

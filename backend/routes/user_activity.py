@@ -31,7 +31,7 @@ def log_user_activity(payload: UserActivityCreate, db: Session = Depends(get_db)
         duration=payload.duration,
         session_id=payload.session_id,
         sequence_order=payload.sequence_order,
-        metadata=payload.metadata
+        context_data=payload.context_data
     )
     db.add(rec)
     db.commit()
@@ -55,7 +55,7 @@ def log_batch_activity(payload: BatchActivityCreate, db: Session = Depends(get_d
             duration=activity_data.duration,
             session_id=activity_data.session_id,
             sequence_order=activity_data.sequence_order,
-            metadata=activity_data.metadata
+            context_data=activity_data.context_data
         )
         activities.append(activity)
     

@@ -29,7 +29,7 @@ class UserActivityCreate(BaseModel):
     duration: Optional[str] = None  # Engagement duration in seconds
     session_id: Optional[str] = None
     sequence_order: Optional[str] = None
-    metadata: Optional[Dict[str, Any]] = None
+    context_data: Optional[Dict[str, Any]] = None
 
 class UserActivityRead(BaseModel):
     id: str
@@ -42,7 +42,7 @@ class UserActivityRead(BaseModel):
     duration: Optional[str] = None
     session_id: Optional[str] = None
     sequence_order: Optional[str] = None
-    metadata: Optional[Dict[str, Any]] = None
+    context_data: Optional[Dict[str, Any]] = None
 
     class Config:
         from_attributes = True
@@ -74,12 +74,12 @@ class SessionCreate(BaseModel):
     user_id: str
     mix_id: str
     device_type: Optional[str] = None
-    metadata: Optional[Dict[str, Any]] = None
+    context_data: Optional[Dict[str, Any]] = None
 
 class SessionUpdate(BaseModel):
     end_time: Optional[datetime] = None
     total_items_viewed: Optional[str] = None
-    metadata: Optional[Dict[str, Any]] = None
+    context_data: Optional[Dict[str, Any]] = None
 
 class SessionRead(BaseModel):
     id: str
@@ -90,7 +90,7 @@ class SessionRead(BaseModel):
     end_time: Optional[datetime] = None
     device_type: Optional[str] = None
     total_items_viewed: Optional[str] = None
-    metadata: Optional[Dict[str, Any]] = None
+    context_data: Optional[Dict[str, Any]] = None
 
     class Config:
         from_attributes = True

@@ -25,7 +25,7 @@ def start_session(payload: SessionCreate, db: Session = Depends(get_db)):
         user_id=payload.user_id,
         mix_id=payload.mix_id,
         device_type=payload.device_type,
-        metadata=payload.metadata
+        context_data=payload.context_data
     )
     db.add(session)
     db.commit()
@@ -48,8 +48,8 @@ def update_session(session_id: str, payload: SessionUpdate, db: Session = Depend
         session.end_time = payload.end_time
     if payload.total_items_viewed:
         session.total_items_viewed = payload.total_items_viewed
-    if payload.metadata:
-        session.metadata = payload.metadata
+    if payload.context_data:
+        session.context_data = payload.context_data
     
     db.commit()
     db.refresh(session)
