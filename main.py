@@ -16,6 +16,8 @@ from backend.mixes import simulate_watch_data
 from backend.mixes import get_mix
 from backend.routes import users
 from backend.routes import user_activity
+from backend.routes import ratings
+from backend.routes import sessions
 
 # Import database setup
 from backend.database import Base, engine
@@ -63,6 +65,8 @@ app.include_router(simulate_watch_data.router, prefix="/mixes")
 # Register the /users routes with the FastAPI app
 app.include_router(users.router)
 app.include_router(user_activity.router)
+app.include_router(ratings.router)
+app.include_router(sessions.router)
 
 # Startup event to create tables after app is ready
 @app.on_event("startup")

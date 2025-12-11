@@ -38,11 +38,53 @@ class UserActivity(Base):
     user_id = Column(String, nullable=False, index=True)
     mix_id = Column(String, ForeignKey("mixes.id"), nullable=False, index=True)
     content_id = Column(String, nullable=True, index=True)  # Content that was viewed
-    event_type = Column(String, nullable=False)  # e.g., "view", "play", "like"
+    event_type = Column(String, nullable=False)  # e.g., "view", "play", "like", "click", "watched", "skip"
     timestamp = Column(DateTime, nullable=False, server_default=func.now())
+    
+    # For collaborative filtering: implicit feedback strength
+    rating = Column(String, nullable=True)  # Optional explicit rating (1-5)
+    duration = Column(String, nullable=True)  # How long they watched/engaged (seconds)
+    
+    # For sequence models: session tracking
+    session_id = Column(String, nullable=True, index=True)  # Group actions into sessions
+    sequence_order = Column(String, nullable=True)  # Order within session
+    
+    # Additional context
+    metadata = Column(JSON, nullable=True)  # Device, location, time of day, etc.
 
-# Composite index for user activity
+# Composite indexes for user activity
 Index("ix_user_mix_time", UserActivity.user_id, UserActivity.mix_id, UserActivity.timestamp.desc())
+Index("ix_session_sequence", UserActivity.session_id, UserActivity.sequence_order)
+
+# --- User-Item Ratings (for collaborative filtering) ---
+class UserItemRating(Base):
+    __tablename__ = "user_item_ratings"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String, nullable=False, index=True)
+    mix_id = Column(String, ForeignKey("mixes.id"), nullable=False, index=True)
+    content_id = Column(String, nullable=False, index=True)
+    rating = Column(String, nullable=False)  # 1-5 stars or 0-1 implicit score
+    rating_type = Column(String, nullable=False, default="explicit")  # explicit or implicit
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+    updated_at = Column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
+
+# Unique constraint: one rating per user-item pair
+Index("ix_user_content_unique", UserItemRating.user_id, UserItemRating.content_id, unique=True)
+
+# --- Watch Sessions (for sequence models) ---
+class WatchSession(Base):
+    __tablename__ = "watch_sessions"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    session_id = Column(String, nullable=False, unique=True, index=True)
+    user_id = Column(String, nullable=False, index=True)
+    mix_id = Column(String, ForeignKey("mixes.id"), nullable=False, index=True)
+    start_time = Column(DateTime, nullable=False, server_default=func.now())
+    end_time = Column(DateTime, nullable=True)
+    device_type = Column(String, nullable=True)
+    total_items_viewed = Column(String, nullable=True, default="0")
+    metadata = Column(JSON, nullable=True)
 
 # --- Uploaded content tied to a mix (one row per item) ---
 class MixContent(Base):
