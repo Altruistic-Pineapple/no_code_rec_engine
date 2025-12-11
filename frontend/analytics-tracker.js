@@ -13,30 +13,30 @@ class AnalyticsTracker {
         this.sessionStartTime = Date.now();
         this.currentMixId = null;
         this.currentUserId = null;
-        
+
         // Start auto-flush timer
         this.startAutoFlush();
-        
+
         // Track page visibility for session management
         this.setupVisibilityTracking();
     }
-    
+
     generateSessionId() {
         return `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     }
-    
+
     setContext(userId, mixId) {
         this.currentUserId = userId;
         this.currentMixId = mixId;
     }
-    
+
     async startSession(userId, mixId, deviceType = 'web') {
         this.currentUserId = userId;
         this.currentMixId = mixId;
         this.sessionId = this.generateSessionId();
         this.sequenceCounter = 0;
         this.sessionStartTime = Date.now();
-        
+
         try {
             await fetch(`${this.apiBaseUrl}/sessions`, {
                 method: 'POST',
@@ -58,13 +58,13 @@ class AnalyticsTracker {
             console.error('Failed to start session:', error);
         }
     }
-    
+
     async endSession() {
         if (!this.sessionId) return;
-        
+
         // Flush any pending activities
         await this.flush();
-        
+
         try {
             await fetch(`${this.apiBaseUrl}/sessions/${this.sessionId}`, {
                 method: 'PATCH',
@@ -78,13 +78,13 @@ class AnalyticsTracker {
             console.error('Failed to end session:', error);
         }
     }
-    
+
     trackEvent(eventType, contentId = null, additionalData = {}) {
         if (!this.currentUserId || !this.currentMixId) {
             console.warn('Cannot track event: user or mix context not set');
             return;
         }
-        
+
         const activity = {
             user_id: this.currentUserId,
             mix_id: this.currentMixId,
@@ -94,51 +94,51 @@ class AnalyticsTracker {
             sequence_order: String(this.sequenceCounter++),
             ...additionalData
         };
-        
+
         this.activityQueue.push(activity);
-        
+
         // Flush immediately for critical events
         if (['rate', 'purchase', 'share'].includes(eventType)) {
             this.flush();
         }
     }
-    
+
     trackView(contentId, duration = null) {
-        this.trackEvent('view', contentId, { 
-            duration: duration ? String(duration) : null 
+        this.trackEvent('view', contentId, {
+            duration: duration ? String(duration) : null
         });
     }
-    
+
     trackClick(contentId) {
         this.trackEvent('click', contentId);
     }
-    
+
     trackPlay(contentId) {
         this.trackEvent('play', contentId);
     }
-    
+
     trackWatched(contentId, duration) {
-        this.trackEvent('watched', contentId, { 
-            duration: String(duration) 
+        this.trackEvent('watched', contentId, {
+            duration: String(duration)
         });
     }
-    
+
     trackSkip(contentId, duration) {
-        this.trackEvent('skip', contentId, { 
-            duration: String(duration) 
+        this.trackEvent('skip', contentId, {
+            duration: String(duration)
         });
     }
-    
+
     trackLike(contentId) {
         this.trackEvent('like', contentId);
     }
-    
+
     async trackRating(contentId, rating) {
         // Log to activity
-        this.trackEvent('rate', contentId, { 
-            rating: String(rating) 
+        this.trackEvent('rate', contentId, {
+            rating: String(rating)
         });
-        
+
         // Also create explicit rating record
         try {
             await fetch(`${this.apiBaseUrl}/ratings`, {
@@ -156,13 +156,13 @@ class AnalyticsTracker {
             console.error('Failed to save rating:', error);
         }
     }
-    
+
     async flush() {
         if (this.activityQueue.length === 0) return;
-        
+
         const activities = [...this.activityQueue];
         this.activityQueue = [];
-        
+
         try {
             await fetch(`${this.apiBaseUrl}/user-activity/batch`, {
                 method: 'POST',
@@ -175,13 +175,13 @@ class AnalyticsTracker {
             this.activityQueue.unshift(...activities);
         }
     }
-    
+
     startAutoFlush() {
         setInterval(() => {
             this.flush();
         }, this.flushInterval);
     }
-    
+
     setupVisibilityTracking() {
         // End session when user leaves
         document.addEventListener('visibilitychange', () => {
@@ -189,18 +189,18 @@ class AnalyticsTracker {
                 this.endSession();
             }
         });
-        
+
         // Also flush on page unload
         window.addEventListener('beforeunload', () => {
             this.flush();
         });
     }
-    
+
     // Content engagement tracker with time measurement
     createEngagementTracker(contentId) {
         let startTime = Date.now();
         let isEngaged = true;
-        
+
         return {
             start: () => {
                 startTime = Date.now();
@@ -209,8 +209,8 @@ class AnalyticsTracker {
             pause: () => {
                 if (isEngaged) {
                     const duration = Math.floor((Date.now() - startTime) / 1000);
-                    this.trackEvent('pause', contentId, { 
-                        duration: String(duration) 
+                    this.trackEvent('pause', contentId, {
+                        duration: String(duration)
                     });
                     isEngaged = false;
                 }
