@@ -42,17 +42,28 @@ async def simulate_watch_data(payload: dict, db: Session = Depends(get_db)):
     
     # Create watch records
     for item in watched_items:
-        activity = UserActivity(
-            user_id=test_user_id,
-            mix_id=mix_id,
-            content_id=item.content_id,
-            event_type="watched",
-            duration="120",  # Simulated 2 minute watch
-            rating=None,
-            session_id=None,
-            sequence_order=None,
-            context_data=None
-        )
+        try:
+            # Try with new schema
+            activity = UserActivity(
+                user_id=test_user_id,
+                mix_id=mix_id,
+                content_id=item.content_id,
+                event_type="watched",
+                duration="120",
+                rating=None,
+                session_id=None,
+                sequence_order=None,
+                context_data=None
+            )
+        except Exception as e:
+            # Fall back to old schema if columns don't exist
+            print(f"Warning: Using old schema: {e}")
+            activity = UserActivity(
+                user_id=test_user_id,
+                mix_id=mix_id,
+                content_id=item.content_id,
+                event_type="watched"
+            )
         db.add(activity)
     
     db.commit()
