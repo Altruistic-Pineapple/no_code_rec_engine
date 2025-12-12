@@ -45,8 +45,12 @@
                     <!-- Authenticated State -->
                     <li class="nav-item" id="authenticatedNav" style="display: none; position: relative;">
                         <a href="javascript:void(0)" id="userDropdownToggle"
-                            style="font-size: 1.1rem; text-decoration: none; color: inherit; cursor: pointer; padding: 0.5rem;">
-                            👤 <span id="userDisplayName">mdo</span> ▼
+                            style="font-size: 1.1rem; text-decoration: none; color: inherit; cursor: pointer; padding: 0.5rem; display: inline-flex; align-items: center; gap: 0.5rem;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="12" cy="8" r="4" fill="#2d4a9d"/>
+                                <path d="M4 20c0-4.418 3.582-8 8-8s8 3.582 8 8" fill="#2d4a9d"/>
+                            </svg>
+                            <span id="userDisplayName">mdo</span> ▼
                         </a>
                         <div id="customDropdownMenu"
                             style="display: none; position: absolute; right: 0; top: 100%; background: white; border: 1px solid #ddd; border-radius: 4px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); min-width: 150px; z-index: 9999;">
