@@ -1,11 +1,26 @@
 :root {
     --sidebar-width: 280px;
     --sidebar-width-collapsed: 80px;
+
+    /* Old-school PC/DOS theme - inspired by int10h.org */
+    --dos-bg: #1a1a1a;
+    --dos-text: #aaaaaa;
+    --dos-highlight: #ffffff;
+    --dos-link: #2d4a9d;
+    --dos-link-visited: #aa00aa;
+    --dos-border: #555555;
+    --dos-button-bg: #2d4a9d;
+    --dos-button-border: #2d4a9d;
 }
 
 body {
     min-height: 100vh;
     min-height: -webkit-fill-available;
+    background-color: var(--dos-bg) !important;
+    color: var(--dos-text) !important;
+    font-family: 'Courier New', 'Courier', monospace !important;
+    font-size: 14px;
+    line-height: 1.4;
 }
 
 html {
@@ -20,12 +35,37 @@ main {
     max-height: 100vh;
     overflow-x: auto;
     overflow-y: auto;
+    background-color: var(--dos-bg) !important;
 }
 
 .sidebar {
     width: var(--sidebar-width);
     height: 100vh;
     transition: all 0.3s ease;
+    background-color: var(--dos-bg) !important;
+    border-right: 1px solid var(--dos-border) !important;
+}
+
+.sidebar * {
+    color: var(--dos-text) !important;
+}
+
+.sidebar .nav-link {
+    border: 1px solid transparent;
+    padding: 8px;
+}
+
+.sidebar .nav-link:hover,
+.sidebar .nav-link:focus {
+    background-color: var(--dos-link) !important;
+    color: var(--dos-highlight) !important;
+    border: 1px solid var(--dos-text) !important;
+}
+
+.sidebar .nav-link.active {
+    background-color: var(--dos-bg) !important;
+    color: var(--dos-highlight) !important;
+    border: 1px solid var(--dos-highlight) !important;
 }
 
 .sidbar.collapsed {
@@ -52,11 +92,28 @@ main {
 .navbar {
     position: relative;
     z-index: 1030;
+    background-color: var(--dos-bg) !important;
+    border-bottom: 1px solid var(--dos-border) !important;
+}
+
+.navbar * {
+    color: var(--dos-text) !important;
 }
 
 .navbar .dropdown-menu {
     z-index: 1050;
     position: absolute;
+    background-color: var(--dos-bg) !important;
+    border: 1px solid var(--dos-border) !important;
+}
+
+.navbar .dropdown-item {
+    color: var(--dos-text) !important;
+}
+
+.navbar .dropdown-item:hover {
+    background-color: var(--dos-link) !important;
+    color: var(--dos-highlight) !important;
 }
 
 /* Dropdown toggle styling */
@@ -89,27 +146,27 @@ main {
     align-items: center;
     padding: .25rem .5rem;
     font-weight: 600;
-    color: rgba(0, 0, 0, .65);
+    color: var(--dos-text) !important;
     background-color: transparent;
     border: 0;
 }
 
 .btn-toggle:hover,
 .btn-toggle:focus {
-    color: rgba(0, 0, 0, .85);
-    background-color: #d2f4ea;
+    color: var(--dos-highlight) !important;
+    background-color: var(--dos-link) !important;
 }
 
 .btn-toggle::before {
     width: 1.25em;
     line-height: 0;
-    content: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='rgba%280,0,0,.5%29' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M5 14l6-6-6-6'/%3e%3c/svg%3e");
+    content: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23aaaaaa' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M5 14l6-6-6-6'/%3e%3c/svg%3e");
     transition: transform .35s ease;
     transform-origin: .5em 50%;
 }
 
 .btn-toggle[aria-expanded="true"] {
-    color: rgba(0, 0, 0, .85);
+    color: var(--dos-highlight) !important;
 }
 
 .btn-toggle[aria-expanded="true"]::before {
@@ -122,11 +179,13 @@ main {
     margin-top: .125rem;
     margin-left: 1.25rem;
     text-decoration: none;
+    color: var(--dos-text) !important;
 }
 
 .btn-toggle-nav a:hover,
 .btn-toggle-nav a:focus {
-    background-color: #d2f4ea;
+    background-color: var(--dos-link) !important;
+    color: var(--dos-highlight) !important;
 }
 
 .scrollarea {
@@ -198,4 +257,215 @@ main {
     #mixesList .nav-item {
         flex-shrink: 0;
     }
+}
+
+/* DOS-style buttons */
+.btn,
+button {
+    background-color: var(--dos-button-bg) !important;
+    color: var(--dos-text) !important;
+    border: 1px solid var(--dos-button-border) !important;
+    font-family: 'Courier New', 'Courier', monospace !important;
+    padding: 6px 12px;
+    transition: all 0.1s ease;
+}
+
+.btn:hover,
+button:hover {
+    background-color: var(--dos-link) !important;
+    color: var(--dos-highlight) !important;
+    border-color: var(--dos-highlight) !important;
+}
+
+.btn-primary {
+    background-color: var(--dos-link) !important;
+    color: var(--dos-highlight) !important;
+    border-color: var(--dos-highlight) !important;
+}
+
+/* DOS-style inputs */
+input,
+textarea,
+select {
+    background-color: var(--dos-bg) !important;
+    color: var(--dos-highlight) !important;
+    border: 1px solid var(--dos-border) !important;
+    font-family: 'Courier New', 'Courier', monospace !important;
+    padding: 6px;
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: var(--dos-text) !important;
+    opacity: 0.6;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+    background-color: var(--dos-bg) !important;
+    color: var(--dos-highlight) !important;
+    border-color: var(--dos-text) !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* DOS-style cards */
+.card {
+    background-color: var(--dos-bg) !important;
+    border: 1px solid var(--dos-border) !important;
+    color: var(--dos-text) !important;
+}
+
+.card-header,
+.card-footer {
+    background-color: var(--dos-bg) !important;
+    border-color: var(--dos-border) !important;
+    color: var(--dos-highlight) !important;
+}
+
+.card-title {
+    color: var(--dos-highlight) !important;
+}
+
+/* Light backgrounds get dark text */
+.bg-light,
+.alert-light {
+    background-color: #e0e0e0 !important;
+    color: #000000 !important;
+}
+
+.bg-light *,
+.alert-light * {
+    color: #000000 !important;
+}
+
+/* DOS-style modals */
+.modal-content {
+    background-color: var(--dos-bg) !important;
+    border: 2px solid var(--dos-border) !important;
+    color: var(--dos-text) !important;
+}
+
+.modal-header,
+.modal-footer {
+    border-color: var(--dos-border) !important;
+}
+
+.modal-header .modal-title {
+    color: var(--dos-highlight) !important;
+}
+
+.modal-header .btn-close {
+    background-color: transparent !important;
+    border: none !important;
+    filter: invert(1) grayscale(100%) brightness(200%);
+    opacity: 1 !important;
+}
+
+.btn-close:hover {
+    filter: invert(1) grayscale(100%) brightness(150%);
+}
+
+/* DOS-style tables */
+table {
+    color: var(--dos-text) !important;
+}
+
+.table {
+    --bs-table-bg: var(--dos-bg);
+    --bs-table-border-color: var(--dos-border);
+}
+
+.table-striped>tbody>tr:nth-of-type(odd) {
+    background-color: #111111 !important;
+}
+
+/* Links */
+a {
+    color: var(--dos-link) !important;
+    text-decoration: underline;
+}
+
+a:hover {
+    color: var(--dos-highlight) !important;
+}
+
+a:visited {
+    color: var(--dos-link-visited) !important;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+    width: 16px;
+    height: 16px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--dos-bg);
+    border: 1px solid var(--dos-border);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--dos-border);
+    border: 1px solid var(--dos-text);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--dos-text);
+}
+
+/* Form controls */
+.form-control,
+.form-select {
+    background-color: var(--dos-bg) !important;
+    color: var(--dos-highlight) !important;
+    border: 1px solid var(--dos-border) !important;
+}
+
+.form-control::placeholder,
+.form-select::placeholder {
+    color: var(--dos-text) !important;
+    opacity: 0.6;
+}
+
+.form-control:focus,
+.form-select:focus {
+    background-color: var(--dos-bg) !important;
+    color: var(--dos-highlight) !important;
+    border-color: var(--dos-text) !important;
+}
+
+/* Text colors */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    color: var(--dos-highlight) !important;
+}
+
+.text-muted {
+    color: var(--dos-text) !important;
+    opacity: 0.7;
+}
+
+/* Badges */
+.badge {
+    background-color: var(--dos-border) !important;
+    color: var(--dos-highlight) !important;
+    border: 1px solid var(--dos-text);
+}
+
+/* Alerts */
+.alert {
+    background-color: var(--dos-bg) !important;
+    border: 1px solid var(--dos-border) !important;
+    color: var(--dos-text) !important;
+}
+
+/* Range slider */
+.form-range {
+    accent-color: var(--dos-text);
 }

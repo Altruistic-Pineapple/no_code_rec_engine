@@ -7,6 +7,7 @@
     <title>Bootstrap demo</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <link href="temp.css" rel="stylesheet">
 
     <!-- Supabase JS Client -->
@@ -23,10 +24,12 @@
 <body>
     <nav class="navbar navbar-expand-lg bg-body-tertiary">
         <div class="container-fluid">
-            <!-- Logo on left -->
-            <svg class="bi me-2" width="40" height="32">
-                <use xlink:href="#bootstrap" />
-            </svg>
+            <!-- Logo on left - Cassette icon from Twemoji (CC-BY 4.0) -->
+            <a class="navbar-brand d-flex align-items-center" href="#" style="text-decoration: none;">
+                <img src="mixtape-logo.png" alt="Mixtape" width="40" height="40" style="object-fit: contain;">
+                <span class="ms-2 d-none d-lg-inline"
+                    style="font-size: 1.25rem; font-weight: bold; color: var(--dos-highlight); font-family: 'Roboto', sans-serif;">Mixtape</span>
+            </a>
 
             <!-- Hamburger on right -->
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
