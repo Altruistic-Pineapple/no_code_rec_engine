@@ -324,18 +324,21 @@
                             <div class="card mb-4">
                                 <div class="card-body">
                                     <h5 class="card-title">Test Recommendations (Optional)</h5>
-                                    <p class="text-muted"><small>Test your algorithm with simulated viewing behavior</small></p>
-                                    
+                                    <p class="text-muted"><small>Test your algorithm with simulated viewing
+                                            behavior</small></p>
+
                                     <div class="alert alert-info mb-3" style="font-size: 0.9rem;">
                                         <strong>💡 How it works:</strong><br>
                                         1. Click "Test Recommendations" to simulate a user and get recommendations<br>
                                         2. Click "👁️ Mark Watched" on items to simulate viewing behavior<br>
-                                        3. The <strong>User Interest</strong> slider controls how much watch history influences results<br>
+                                        3. The <strong>User Interest</strong> slider controls how much watch history
+                                        influences results<br>
                                         4. Higher User Interest = stronger personalization based on what you "watched"
                                     </div>
 
                                     <button id="testRecsBtn" class="btn btn-sm btn-outline-success mb-3">Test
                                         Recommendations</button>
+                                    <button id="resetTestUserBtn" class="btn btn-sm btn-outline-warning mb-3 ms-2" style="display: none;">Reset Test User</button>
                                     <span id="testStatus" class="ms-2 text-muted"></span>
 
                                     <div id="testRecsContainer" class="mt-3"></div>
@@ -460,6 +463,9 @@
                         };
                     }
 
+                    // Store test user ID per mix to persist watch history
+                    let testUserIds = {}; // { mixId: testUserId }
+
                     // Test Recommendations
                     document.getElementById('testRecsBtn').addEventListener('click', async () => {
                         const mixId = localStorage.getItem('currentMixId');
@@ -471,7 +477,7 @@
                         const testStatus = document.getElementById('testStatus');
                         const container = document.getElementById('testRecsContainer');
 
-                        testStatus.textContent = 'Simulating user watch data and testing recommendations...';
+                        testStatus.textContent = 'Testing recommendations with current settings...';
                         testStatus.className = 'ms-2 text-info';
                         container.innerHTML = '';
 
@@ -479,14 +485,23 @@
                             // Get current business control values
                             const controls = getBusinessControls();
 
-                            // Simulate user watch data
-                            const simulateResponse = await fetch(`${API_BASE_URL}/mixes/simulate-watch-data`, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ mix_id: mixId })
-                            });
-                            const simulateData = await simulateResponse.json();
-                            const testUserId = simulateData.user_id;
+                            // Reuse existing test user for this mix, or create new one
+                            let testUserId = testUserIds[mixId];
+                            
+                            if (!testUserId) {
+                                // First time testing this mix - create test user with simulated data
+                                const simulateResponse = await fetch(`${API_BASE_URL}/mixes/simulate-watch-data`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ mix_id: mixId })
+                                });
+                                const simulateData = await simulateResponse.json();
+                                testUserId = simulateData.user_id;
+                                testUserIds[mixId] = testUserId; // Store for future tests
+                                console.log('Created new test user:', testUserId);
+                            } else {
+                                console.log('Reusing test user with watch history:', testUserId);
+                            }
 
                             // Test with business controls - fetch 100 items
                             const params = new URLSearchParams({
@@ -641,12 +656,28 @@
 
                             container.appendChild(card);
 
-                            testStatus.textContent = '✓ Test complete! Mark items as watched, then test again to see refined recommendations.';
+                            // Show reset button once test user is created
+                            document.getElementById('resetTestUserBtn').style.display = 'inline-block';
+
+                            testStatus.textContent = '✓ Test complete! Mark items as watched, then test again to see personalized recommendations.';
                             testStatus.className = 'ms-2 text-success';
                         } catch (error) {
                             console.error('Error testing recommendations:', error);
                             testStatus.textContent = '✗ Test failed. Check your mix is properly configured.';
                             testStatus.className = 'ms-2 text-danger';
+                        }
+                    });
+
+                    // Reset test user button
+                    document.getElementById('resetTestUserBtn').addEventListener('click', () => {
+                        const mixId = localStorage.getItem('currentMixId');
+                        if (mixId && testUserIds[mixId]) {
+                            delete testUserIds[mixId];
+                            document.getElementById('testRecsContainer').innerHTML = '';
+                            document.getElementById('testStatus').textContent = 'Test user reset. Click "Test Recommendations" to start fresh.';
+                            document.getElementById('testStatus').className = 'ms-2 text-info';
+                            document.getElementById('resetTestUserBtn').style.display = 'none';
+                            console.log('Test user reset for mix:', mixId);
                         }
                     });
 
