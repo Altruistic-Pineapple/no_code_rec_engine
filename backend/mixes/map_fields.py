@@ -102,44 +102,51 @@ async def map_fields(request: FieldMappingRequest, db: Session = Depends(get_db)
 
         db.commit()
 
-    # Automatically rebuild embeddings after mapping
+    # Automatically compute semantic embeddings after mapping (Level 3 only)
     try:
-        # Re-generate embeddings for this mix
+        from sentence_transformers import SentenceTransformer
+        
         rows = db.query(MixContent).filter(MixContent.mix_id == request.mix_id).all()
         if rows:
             df = pd.DataFrame([
-                {"content_id": r.content_id, "title": r.title, "description": r.description}
+                {"content_id": r.content_id, "title": r.title, "description": r.description, "tags": r.tags}
                 for r in rows
             ])
             
+            # Build text field with weighted tags (same as recommendation logic)
             title = df["title"] if "title" in df.columns else pd.Series([""] * len(df))
             desc = df["description"] if "description" in df.columns else pd.Series([""] * len(df))
-            df["text"] = title.fillna("") + " " + desc.fillna("")
+            tags = df["tags"] if "tags" in df.columns else pd.Series([""] * len(df))
+            tags_weighted = tags.fillna("").apply(lambda x: f"{x} {x} {x}" if x else "")
+            df["text"] = title.fillna("") + " " + desc.fillna("") + " " + tags_weighted
             
-            if not df.empty:
-                # compute TF-IDF
-                tfidf_sparse = TfidfVectorizer().fit_transform(df["text"])
-                try:
-                    tfidf = tfidf_sparse.toarray()
-                except Exception:
-                    tfidf = np.vstack([row.toarray().ravel() for row in tfidf_sparse])
+            if not df.empty and not (df["text"].str.strip() == "").all():
+                print(f"Pre-computing semantic embeddings for mix {request.mix_id}...")
                 
-                # persist embeddings
+                # Load sentence transformer model and compute embeddings
+                model = SentenceTransformer('all-MiniLM-L6-v2')
+                texts = df["text"].fillna("").tolist()
+                embeddings = model.encode(texts, show_progress_bar=False)
+                
+                # Persist semantic embeddings to database
                 try:
                     db.query(Embedding).filter(Embedding.mix_id == request.mix_id).delete()
                     embeddings_inserted = 0
                     for idx, row in df.iterrows():
-                        vec = tfidf[idx]
+                        vec = embeddings[idx]
                         buf = BytesIO()
                         np.save(buf, vec, allow_pickle=False)
                         emb = Embedding(mix_id=request.mix_id, content_id=row.get("content_id"), vector=buf.getvalue())
                         db.add(emb)
                         embeddings_inserted += 1
                     db.commit()
-                except Exception:
+                    print(f"Cached {embeddings_inserted} semantic embeddings")
+                except Exception as e:
+                    print(f"Failed to cache embeddings: {e}")
                     db.rollback()
-    except Exception:
+    except Exception as e:
         # Silently fail on embeddings - mapping already succeeded
+        print(f"Embedding generation failed: {e}")
         pass
 
     return {"message": "Field mapping saved", "path": mapping_path, "rows_inserted": inserted, "embeddings_generated": True}

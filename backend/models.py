@@ -13,7 +13,6 @@ class Mix(Base):
     title = Column(String, nullable=False, index=True)
     status = Column(String, nullable=False, index=True)
     filename = Column(String, nullable=True)
-    quality_level = Column(String, nullable=False, default="2")  # Default to Level 2
     created_at = Column(DateTime, nullable=False, server_default=func.now(), index=True)
 
 # --- User record (matches Supabase schema) ---

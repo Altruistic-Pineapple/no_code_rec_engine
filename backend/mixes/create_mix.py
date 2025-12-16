@@ -10,7 +10,6 @@ router = APIRouter()
 # Pydantic schema for incoming request
 class MixCreateRequest(BaseModel):
     title: str
-    quality_level: int = 2  # Default to Level 2 (1, 2, or 3)
     user_id: str = None  # Owner of this mix (Supabase user ID)
 
 # DB dependency
@@ -28,8 +27,7 @@ def create_mix(request: MixCreateRequest, db: Session = Depends(get_db)):
         id=mix_id,
         user_id=request.user_id,
         title=request.title,
-        status="draft",
-        quality_level=str(request.quality_level)
+        status="draft"
     )
     db.add(new_mix)
     db.commit()
@@ -38,7 +36,6 @@ def create_mix(request: MixCreateRequest, db: Session = Depends(get_db)):
         "mix_id": new_mix.id,
         "user_id": new_mix.user_id,
         "title": new_mix.title,
-        "status": new_mix.status,
-        "quality_level": int(new_mix.quality_level)
+        "status": new_mix.status
     }
 

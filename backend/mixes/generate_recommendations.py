@@ -1,5 +1,4 @@
 from fastapi import APIRouter, HTTPException, Depends
-from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 import pandas as pd, json
 from backend.paths import mix_csv_path, mix_mapping_path
@@ -29,26 +28,23 @@ def get_sentence_transformer():
 
 router = APIRouter()
 @router.get("/generate-recommendations")
-async def generate_recommendations(mix_id: str, user_id: str = None, content_id: str = None, top_k: int = 5, quality_level: int = None, db: Session = Depends(get_db)):
+async def generate_recommendations(
+    mix_id: str, 
+    user_id: str = None, 
+    content_id: str = None, 
+    top_k: int = 5,
+    # Business control sliders (0.0 to 1.0)
+    user_interest: float = 0.5,        # Trust watch history more/less
+    new_release_boost: float = 0.3,    # Surface fresh content  
+    original_boost: float = 0.2,       # Promote owned/original content
+    diversity: float = 0.4,            # Avoid repetition & filter bubbles
+    db: Session = Depends(get_db)
+):
+    """
+    Generate recommendations using semantic embeddings (Level 3 only).
+    Business controls allow fine-tuning the recommendation algorithm.
+    """
     mix_id = mix_id.strip()
-    
-    # Fetch mix from DB to get default quality level
-    mix = db.query(MixContent).filter(MixContent.mix_id == mix_id).first()
-    if not mix:
-        # Try to get from Mix table if no content yet
-        from backend.models import Mix
-        mix = db.query(Mix).filter(Mix.id == mix_id).first()
-    
-    # Use provided quality_level or default to mix's quality_level
-    if quality_level is None and mix:
-        from backend.models import Mix
-        mix_obj = db.query(Mix).filter(Mix.id == mix_id).first()
-        if mix_obj:
-            quality_level = int(mix_obj.quality_level)
-        else:
-            quality_level = 2
-    elif quality_level is None:
-        quality_level = 2
     
     csv_path = mix_csv_path(mix_id)
     mapping_path = mix_mapping_path(mix_id)
@@ -128,31 +124,46 @@ async def generate_recommendations(mix_id: str, user_id: str = None, content_id:
     if len(df) == 1 and content_id is None:
         return {"mix_id": mix_id, "based_on": "first_item", "recommendations": []}
 
-    # Compute similarity based on quality level
-    if quality_level == 3:
-        # Level 3: Use semantic embeddings (sentence-transformers)
-        print("DEBUG Level 3: Computing semantic embeddings...")
+    # Use semantic embeddings (Level 3 only) - try cached first, compute if needed
+    print("Loading semantic embeddings...")
+    
+    # Try to load pre-computed embeddings from database
+    cached_embeddings = db.query(Embedding).filter(Embedding.mix_id == mix_id).all()
+    
+    if cached_embeddings and len(cached_embeddings) == len(df):
+        # Use cached embeddings (fast path)
+        print(f"Using {len(cached_embeddings)} cached semantic embeddings")
+        embedding_dict = {emb.content_id: emb for emb in cached_embeddings}
+        
+        embeddings = []
+        for _, row in df.iterrows():
+            content_id_val = row["content_id"]
+            if content_id_val in embedding_dict:
+                buf = BytesIO(embedding_dict[content_id_val].vector)
+                vec = np.load(buf, allow_pickle=False)
+                embeddings.append(vec)
+            else:
+                # Missing embedding, need to recompute
+                embeddings = None
+                break
+        
+        if embeddings is not None:
+            embeddings = np.array(embeddings)
+            sim = cosine_similarity(embeddings)
+        else:
+            # Some embeddings missing, recompute all
+            cached_embeddings = None
+    
+    if not cached_embeddings or len(cached_embeddings) != len(df):
+        # Compute fresh semantic embeddings (slower fallback)
+        print("Computing fresh semantic embeddings...")
         model = get_sentence_transformer()
         texts = df["text"].fillna("").tolist()
         embeddings = model.encode(texts, show_progress_bar=False)
         sim = cosine_similarity(embeddings)
-        print(f"DEBUG Level 3: Computed {len(embeddings)} semantic embeddings")
-    else:
-        # Level 1 & 2: Use TF-IDF
-        # Clear old embeddings and recompute fresh to ensure tags/genre are included
-        # This is important after algorithm updates that change the text field
-        print(f"DEBUG Level {quality_level}: Computing TF-IDF with genre-weighted text...")
-        
-        # Always recompute TF-IDF to ensure we use the latest text (with tags)
-        tfidf_sparse = TfidfVectorizer().fit_transform(df["text"])
-        try:
-            tfidf = tfidf_sparse.toarray()
-        except Exception:
-            # fallback: convert each row
-            tfidf = np.vstack([row.toarray().ravel() for row in tfidf_sparse])
-        sim = cosine_similarity(tfidf)
-        
-        print(f"DEBUG Level {quality_level}: Computed TF-IDF for {len(df)} items")
+        print(f"Computed {len(embeddings)} semantic embeddings")
+    
+    print(f"Similarity matrix shape: {sim.shape}")
 
     if content_id is None:
         # If user_id provided, get their most recent watching activity
@@ -195,120 +206,78 @@ async def generate_recommendations(mix_id: str, user_id: str = None, content_id:
     cols = [c for c in ["content_id", "title", "description", "tags"] if c in df.columns]
     recommendations = df.iloc[top_indices][cols].to_dict(orient="records")
     
-    # Add scores to recommendations based on quality level
-    if quality_level == 2 and user_id:
-        # Level 2: Collaborative Filtering - boost items similar to what user watched
-        from backend.models import UserActivity
-        
-        # Get items the user has already watched
+    # Apply business control sliders to adjust recommendations
+    from backend.models import UserActivity
+    
+    # Get user watch history if available
+    watched_content_ids = set()
+    watched_scores = {}
+    if user_id:
         watched_items = db.query(UserActivity.content_id).filter(
             UserActivity.user_id == user_id,
             UserActivity.mix_id == mix_id
         ).all()
         watched_content_ids = set(r[0] for r in watched_items)
-        print(f"DEBUG Level 2: watched_content_ids = {watched_content_ids}")
         
-        # For each watched item, find its similarity to use as a boost signal
-        watched_scores = {}
+        # For each watched item, get its semantic similarity to all items
         for watched_id in watched_content_ids:
             watched_idx = df.index[df["content_id"] == watched_id]
             if len(watched_idx) > 0:
                 watched_idx = int(watched_idx[0])
-                watched_sims = sim[watched_idx]  # Similarity of watched item to ALL items
+                watched_sims = sim[watched_idx]
                 watched_scores[watched_id] = watched_sims
+    
+    # Calculate scores with business controls applied
+    filtered_recommendations = []
+    seen_tags = set()  # For diversity tracking
+    
+    for i, idx in enumerate(top_indices):
+        semantic_score = float(scores[idx])
+        content_id_val = df.iloc[idx]["content_id"]
         
-        # Apply collaborative filtering: boost items similar to watched items
-        # Also filter out watched items completely
-        filtered_recommendations = []
-        for i, idx in enumerate(top_indices):
-            tfidf_score = float(scores[idx])
-            content_id_val = df.iloc[idx]["content_id"]
-            
-            if content_id_val in watched_content_ids:
-                # Skip watched items entirely - don't include in results
-                print(f"DEBUG Level 2: {content_id_val} is watched, filtering out")
-                continue
+        # Skip already watched items
+        if content_id_val in watched_content_ids:
+            continue
+        
+        # Base score from semantic similarity
+        final_score = semantic_score
+        
+        # 1. User Interest: Boost items similar to watch history
+        if user_id and watched_scores and user_interest > 0:
+            collab_boost = sum(watched_sims[idx] for watched_sims in watched_scores.values())
+            if watched_content_ids:
+                collab_boost = collab_boost / len(watched_content_ids)
+            # Apply user_interest weight (0.0 to 1.0)
+            final_score = (semantic_score * (1 - user_interest)) + (collab_boost * user_interest)
+        
+        # 2. New Release Boost: Boost recent content (if release_date exists)
+        if new_release_boost > 0 and "release_date" in df.columns:
+            # Simple recency boost (would need actual date logic)
+            final_score += new_release_boost * 0.1
+        
+        # 3. Original Content Boost: Boost original/owned content (if is_original flag exists)
+        if original_boost > 0 and "is_original" in df.columns:
+            row = df.iloc[idx]
+            if row.get("is_original") == True:
+                final_score += original_boost * 0.15
+        
+        # 4. Diversity/Fairness: Penalize repeated tags/genres
+        if diversity > 0 and "tags" in df.columns:
+            row = df.iloc[idx]
+            tags = row.get("tags", "")
+            if tags in seen_tags:
+                # Penalize repetition based on diversity slider
+                final_score *= (1 - diversity * 0.3)
             else:
-                # Sum similarity of this item to all watched items (collaborative boost)
-                collab_boost = sum(watched_sims[idx] for watched_sims in watched_scores.values())
-                # Normalize by number of watched items to keep score stable
-                if watched_content_ids:
-                    collab_boost = collab_boost / len(watched_content_ids)
-                
-                # 30% TF-IDF + 70% collaborative boost (collaborative dominates)
-                hybrid_score = (tfidf_score * 0.3) + (collab_boost * 0.7)
-                print(f"DEBUG Level 2: {content_id_val} TF-IDF={tfidf_score:.4f}, collab_boost={collab_boost:.4f}, hybrid={hybrid_score:.4f}")
-            
-            rec = recommendations[i].copy()
-            rec["score"] = float(hybrid_score)
-            filtered_recommendations.append(rec)
+                seen_tags.add(tags)
         
-        recommendations = filtered_recommendations
-        
-        # RE-SORT by new hybrid scores (create different ranking than Level 1)
-        recommendations = sorted(recommendations, key=lambda x: x.get("score", 0), reverse=True)
-        print(f"DEBUG Level 2: After re-sort = {[r.get('content_id') for r in recommendations[:5]]}")
-    elif quality_level == 3 and user_id:
-        # Level 3: Semantic similarity + collaborative boost (premium level)
-        from backend.models import UserActivity
-        
-        # Get items the user has already watched
-        watched_items = db.query(UserActivity.content_id).filter(
-            UserActivity.user_id == user_id,
-            UserActivity.mix_id == mix_id
-        ).all()
-        watched_content_ids = set(r[0] for r in watched_items)
-        print(f"DEBUG Level 3: watched_content_ids = {watched_content_ids}")
-        
-        # For each watched item, get its semantic similarity to all items (collaborative signal)
-        watched_scores = {}
-        for watched_id in watched_content_ids:
-            watched_idx = df.index[df["content_id"] == watched_id]
-            if len(watched_idx) > 0:
-                watched_idx = int(watched_idx[0])
-                watched_sims = sim[watched_idx]  # Semantic similarity of watched item to ALL items
-                watched_scores[watched_id] = watched_sims
-        
-        # Apply semantic similarity + collaborative boost + user history
-        # Also filter out watched items completely
-        filtered_recommendations = []
-        for i, idx in enumerate(top_indices):
-            semantic_score = float(scores[idx])
-            content_id_val = df.iloc[idx]["content_id"]
-            
-            if content_id_val in watched_content_ids:
-                # Skip watched items entirely - don't include in results
-                print(f"DEBUG Level 3: {content_id_val} is watched, filtering out")
-                continue
-            else:
-                # Boost items semantically similar to watched items (collaborative signal)
-                collab_boost = sum(watched_sims[idx] for watched_sims in watched_scores.values())
-                # Normalize by number of watched items
-                if watched_content_ids:
-                    collab_boost = collab_boost / len(watched_content_ids)
-                
-                # 80% semantic understanding + 20% collaborative boost (semantic dominates)
-                hybrid_score = (semantic_score * 0.8) + (collab_boost * 0.2)
-                print(f"DEBUG Level 3: {content_id_val} semantic={semantic_score:.4f}, collab_boost={collab_boost:.4f}, hybrid={hybrid_score:.4f}")
-            
-            rec = recommendations[i].copy()
-            rec["score"] = float(hybrid_score)
-            filtered_recommendations.append(rec)
-        
-        recommendations = filtered_recommendations
-        
-        # RE-SORT by new hybrid scores (create premium ranking with both signals)
-        recommendations = sorted(recommendations, key=lambda x: x.get("score", 0), reverse=True)
-        print(f"DEBUG Level 3: After re-sort = {[r.get('content_id') for r in recommendations[:5]]}")
-    elif quality_level == 3:
-        # Level 3 without user_id: Just use semantic similarity scores
-        print(f"DEBUG Level 3: Using semantic embeddings scores (no user history)")
-        for i, idx in enumerate(top_indices):
-            recommendations[i]["score"] = float(scores[idx])
-    else:
-        # Level 1: Just use TF-IDF scores
-        for i, idx in enumerate(top_indices):
-            recommendations[i]["score"] = float(scores[idx])
+        rec = recommendations[i].copy()
+        rec["score"] = float(final_score)
+        filtered_recommendations.append(rec)
+    
+    # Sort by adjusted scores
+    recommendations = sorted(filtered_recommendations, key=lambda x: x.get("score", 0), reverse=True)
+    print(f"Applied business controls: user_interest={user_interest}, new_release={new_release_boost}, original={original_boost}, diversity={diversity}")
     
     # Apply business rules if they exist
     from backend.models import BusinessRules
@@ -320,26 +289,19 @@ async def generate_recommendations(mix_id: str, user_id: str = None, content_id:
     # NOW limit to top_k after rules are applied
     recommendations = recommendations[:top_k]
     
-    # Quality level affects the response
-    # 1 = Traditional ML (just return top_k)
-    # 2 = Hybrid (return with scores)
-    # 3 = LLM Embeddings (would require additional processing)
     response = {
         "mix_id": mix_id,
         "user_id": user_id,
         "based_on": content_id or "first_item",
-        "quality_level": quality_level,
+        "method": "Semantic Embeddings (Level 3)",
+        "business_controls": {
+            "user_interest": user_interest,
+            "new_release_boost": new_release_boost,
+            "original_boost": original_boost,
+            "diversity": diversity
+        },
         "recommendations": recommendations
     }
-    
-    # For quality level 3 (LLM), we'd add additional metadata
-    if quality_level == 3:
-        response["method"] = "LLM Embeddings"
-        response["note"] = "Using advanced semantic understanding"
-    elif quality_level == 2:
-        response["method"] = "Hybrid ML"
-    else:
-        response["method"] = "Traditional ML"
 
     return response
 
