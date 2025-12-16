@@ -338,7 +338,8 @@
 
                                     <button id="testRecsBtn" class="btn btn-sm btn-outline-success mb-3">Test
                                         Recommendations</button>
-                                    <button id="resetTestUserBtn" class="btn btn-sm btn-outline-warning mb-3 ms-2" style="display: none;">Reset Test User</button>
+                                    <button id="resetTestUserBtn" class="btn btn-sm btn-outline-warning mb-3 ms-2"
+                                        style="display: none;">Reset Test User</button>
                                     <span id="testStatus" class="ms-2 text-muted"></span>
 
                                     <div id="testRecsContainer" class="mt-3"></div>
@@ -463,6 +464,70 @@
                         };
                     }
 
+                    // Save slider values to localStorage per mix
+                    function saveSliderValues(mixId) {
+                        const sliders = {
+                            user_interest: document.getElementById('userInterestSlider').value,
+                            new_release_boost: document.getElementById('newReleaseSlider').value,
+                            original_boost: document.getElementById('originalBoostSlider').value,
+                            diversity: document.getElementById('diversitySlider').value
+                        };
+                        localStorage.setItem(`mix_sliders_${mixId}`, JSON.stringify(sliders));
+                    }
+
+                    // Load slider values from localStorage for a mix
+                    function loadSliderValues(mixId) {
+                        const saved = localStorage.getItem(`mix_sliders_${mixId}`);
+                        if (saved) {
+                            const sliders = JSON.parse(saved);
+                            document.getElementById('userInterestSlider').value = sliders.user_interest || 50;
+                            document.getElementById('newReleaseSlider').value = sliders.new_release_boost || 30;
+                            document.getElementById('originalBoostSlider').value = sliders.original_boost || 20;
+                            document.getElementById('diversitySlider').value = sliders.diversity || 40;
+                            
+                            // Update displayed values
+                            updateSliderValue('userInterestSlider', 'userInterestValue');
+                            updateSliderValue('newReleaseSlider', 'newReleaseValue');
+                            updateSliderValue('originalBoostSlider', 'originalBoostValue');
+                            updateSliderValue('diversitySlider', 'diversityValue');
+                        }
+                    }
+
+                    // Auto-save sliders when they change
+                    ['userInterestSlider', 'newReleaseSlider', 'originalBoostSlider', 'diversitySlider'].forEach(sliderId => {
+                        document.getElementById(sliderId).addEventListener('change', () => {
+                            const mixId = localStorage.getItem('currentMixId');
+                            if (mixId) saveSliderValues(mixId);
+                        });
+                    });
+
+                    // Load mix data (CSV status, sliders, etc.)
+                    async function loadMixData(mixId) {
+                        try {
+                            // Load slider values
+                            loadSliderValues(mixId);
+                            
+                            // Check if CSV is uploaded by checking if mix has content
+                            const response = await fetch(`${API_BASE_URL}/mixes/${mixId}`);
+                            if (response.ok) {
+                                const mixData = await response.json();
+                                console.log('Mix data loaded:', mixData);
+                                
+                                // Update upload status based on mix status
+                                const statusSpan = document.getElementById('uploadStatus');
+                                if (mixData.status === 'ready') {
+                                    statusSpan.textContent = 'CSV uploaded and mapped ✓';
+                                    statusSpan.className = 'ms-2 text-success';
+                                } else {
+                                    statusSpan.textContent = 'No CSV uploaded yet';
+                                    statusSpan.className = 'ms-2 text-muted';
+                                }
+                            }
+                        } catch (error) {
+                            console.error('Error loading mix data:', error);
+                        }
+                    }
+
                     // Store test user ID per mix to persist watch history
                     let testUserIds = {}; // { mixId: testUserId }
 
@@ -487,7 +552,7 @@
 
                             // Reuse existing test user for this mix, or create new one
                             let testUserId = testUserIds[mixId];
-                            
+
                             if (!testUserId) {
                                 // First time testing this mix - create test user with simulated data
                                 const simulateResponse = await fetch(`${API_BASE_URL}/mixes/simulate-watch-data`, {
@@ -1072,10 +1137,13 @@
 
                             // Add click handler to select the mix
                             const mixLink = newMixItem.querySelector('.mix-link');
-                            mixLink.addEventListener('click', (e) => {
+                            mixLink.addEventListener('click', async (e) => {
                                 e.preventDefault();
                                 console.log('Mix clicked:', mixId, title);
                                 localStorage.setItem('currentMixId', mixId);
+                                
+                                // Load mix data from backend
+                                await loadMixData(mixId);
                                 loadRules();
 
                                 // Update active state on both sidebars
@@ -1473,10 +1541,17 @@
                         }
                     }
 
-                    // Auto-generate recommendations when page loads
-                    window.addEventListener('load', () => {
-                        if (localStorage.getItem('currentMixId')) {
-                            // Mix is already loaded, rules will be loaded separately
+                    // Load current mix data when page loads
+                    window.addEventListener('load', async () => {
+                        const currentMixId = localStorage.getItem('currentMixId');
+                        if (currentMixId) {
+                            await loadMixData(currentMixId);
+                            loadRules();
+                            
+                            // Highlight the active mix in sidebar
+                            document.querySelectorAll(`[data-mix-id="${currentMixId}"]`).forEach(link => {
+                                if (link.classList.contains('mix-link')) link.classList.add('active');
+                            });
                         }
                     });
 
