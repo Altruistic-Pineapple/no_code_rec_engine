@@ -324,8 +324,15 @@
                             <div class="card mb-4">
                                 <div class="card-body">
                                     <h5 class="card-title">Test Recommendations (Optional)</h5>
-                                    <p class="text-muted"><small>Verify recommendations are working with current
-                                            business control settings</small></p>
+                                    <p class="text-muted"><small>Test your algorithm with simulated viewing behavior</small></p>
+                                    
+                                    <div class="alert alert-info mb-3" style="font-size: 0.9rem;">
+                                        <strong>💡 How it works:</strong><br>
+                                        1. Click "Test Recommendations" to simulate a user and get recommendations<br>
+                                        2. Click "👁️ Mark Watched" on items to simulate viewing behavior<br>
+                                        3. The <strong>User Interest</strong> slider controls how much watch history influences results<br>
+                                        4. Higher User Interest = stronger personalization based on what you "watched"
+                                    </div>
 
                                     <button id="testRecsBtn" class="btn btn-sm btn-outline-success mb-3">Test
                                         Recommendations</button>
@@ -590,6 +597,17 @@
                                             this.disabled = true;
                                             this.style.fontSize = '0.7rem';
                                             this.style.padding = '2px 6px';
+
+                                            // Show feedback banner
+                                            const feedbackBanner = document.createElement('div');
+                                            feedbackBanner.className = 'alert alert-success mt-2 mb-2';
+                                            feedbackBanner.style.fontSize = '0.85rem';
+                                            feedbackBanner.innerHTML = `
+                                                <strong>✅ Watch data recorded!</strong> "${title}" added to viewing history.<br>
+                                                <small>💡 The <strong>User Interest</strong> slider (${Math.round(getBusinessControls().user_interest * 100)}%) controls how much this influences future recommendations. Try adjusting it and testing again!</small>
+                                            `;
+                                            container.insertBefore(feedbackBanner, container.firstChild);
+                                            setTimeout(() => feedbackBanner.remove(), 8000);
 
                                             // Remove this item from the list with a fade effect
                                             const listItem = this.closest('li');
