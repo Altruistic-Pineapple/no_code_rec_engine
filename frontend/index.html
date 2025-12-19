@@ -484,7 +484,7 @@
                             document.getElementById('newReleaseSlider').value = sliders.new_release_boost || 30;
                             document.getElementById('originalBoostSlider').value = sliders.original_boost || 20;
                             document.getElementById('diversitySlider').value = sliders.diversity || 40;
-                            
+
                             // Update displayed values
                             updateSliderValue('userInterestSlider', 'userInterestValue');
                             updateSliderValue('newReleaseSlider', 'newReleaseValue');
@@ -506,13 +506,13 @@
                         try {
                             // Load slider values
                             loadSliderValues(mixId);
-                            
+
                             // Check if CSV is uploaded by checking if mix has content
                             const response = await fetch(`${API_BASE_URL}/mixes/${mixId}`);
                             if (response.ok) {
                                 const mixData = await response.json();
                                 console.log('Mix data loaded:', mixData);
-                                
+
                                 // Update upload status based on mix status
                                 const statusSpan = document.getElementById('uploadStatus');
                                 if (mixData.status === 'ready') {
@@ -1141,7 +1141,7 @@
                                 e.preventDefault();
                                 console.log('Mix clicked:', mixId, title);
                                 localStorage.setItem('currentMixId', mixId);
-                                
+
                                 // Load mix data from backend
                                 await loadMixData(mixId);
                                 loadRules();
@@ -1547,7 +1547,7 @@
                         if (currentMixId) {
                             await loadMixData(currentMixId);
                             loadRules();
-                            
+
                             // Highlight the active mix in sidebar
                             document.querySelectorAll(`[data-mix-id="${currentMixId}"]`).forEach(link => {
                                 if (link.classList.contains('mix-link')) link.classList.add('active');
@@ -2341,7 +2341,7 @@ app.listen(3000, () => {
                     updateLanguageOptions('ott');
 
                     // ==========================================
-                    // SUPABASE CONFIGURATION
+                    // SUPABASE CONFIGURATION v2
                     // ==========================================
                     const SUPABASE_URL = 'https://nhugicjyxnxiccmpenzs.supabase.co';
                     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5odWdpY2p5eG54aWNjbXBlbnpzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ2OTMxNTAsImV4cCI6MjA4MDI2OTE1MH0.uQ41mShGieG32gSJolAyjMhtpT3r9TtZevVMm19eB58';
