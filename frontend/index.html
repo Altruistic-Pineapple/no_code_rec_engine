@@ -2347,7 +2347,7 @@ app.listen(3000, () => {
                     const SUPABASE_URL = 'https://nhugicjyxnxiccmpenzs.supabase.co';
                     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5odWdpY2p5eG54aWNjbXBlbnpzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ2OTMxNTAsImV4cCI6MjA4MDI2OTE1MH0.uQ41mShGieG32gSJolAyjMhtpT3r9TtZevVMm19eB58';
 
-                    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
                     // ==========================================
                     // AUTHENTICATION STATE MANAGEMENT
@@ -2360,7 +2360,7 @@ app.listen(3000, () => {
 
                     // Check for existing session on page load
                     async function checkSession() {
-                        const { data: { session } } = await supabase.auth.getSession();
+                        const { data: { session } } = await supabaseClient.auth.getSession();
                         if (session) {
                             authState.isAuthenticated = true;
                             authState.user = {
@@ -2376,7 +2376,7 @@ app.listen(3000, () => {
                     }
 
                     // Listen for auth state changes
-                    supabase.auth.onAuthStateChange((event, session) => {
+                    supabaseClient.auth.onAuthStateChange((event, session) => {
                         console.log('Auth state changed:', event);
                         if (session) {
                             authState.isAuthenticated = true;
@@ -2447,7 +2447,7 @@ app.listen(3000, () => {
                         }
 
                         try {
-                            const { data, error } = await supabase.auth.signInWithPassword({
+                            const { data, error } = await supabaseClient.auth.signInWithPassword({
                                 email: email,
                                 password: password
                             });
@@ -2488,7 +2488,7 @@ app.listen(3000, () => {
                         console.log('Logging out...');
 
                         try {
-                            const { error } = await supabase.auth.signOut();
+                            const { error } = await supabaseClient.auth.signOut();
                             if (error) {
                                 console.error('Logout error:', error.message);
                             }
@@ -2513,7 +2513,7 @@ app.listen(3000, () => {
                         }
 
                         try {
-                            const { data, error } = await supabase.auth.signUp({
+                            const { data, error } = await supabaseClient.auth.signUp({
                                 email: email,
                                 password: password
                             });
