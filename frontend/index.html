@@ -2459,6 +2459,13 @@ app.listen(3000, () => {
                                 mobileSidebarContent.style.display = 'none';
                             }
                         }
+                    }
+
+                    async function handleLogin() {
+                        const email = document.getElementById('username').value.trim();
+                        const password = document.getElementById('password').value.trim();
+
+                        if (!email || !password) {
                             alert('Please enter both email and password');
                             return;
                         }
