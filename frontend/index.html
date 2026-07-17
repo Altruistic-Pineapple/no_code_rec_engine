@@ -2353,6 +2353,9 @@ app.listen(3000, () => {
                     // AUTHENTICATION STATE MANAGEMENT
                     // ==========================================
 
+                    // Set to true to enable Supabase auth, false to bypass it and open the app directly.
+                    const ENABLE_SUPABASE_AUTH = false;
+
                     let authState = {
                         isAuthenticated: false,
                         user: null
@@ -2360,6 +2363,23 @@ app.listen(3000, () => {
 
                     // Check for existing session on page load
                     async function checkSession() {
+                        if (!ENABLE_SUPABASE_AUTH) {
+                            const storedTestUser = localStorage.getItem('testUser');
+                            const fallbackUser = storedTestUser ? JSON.parse(storedTestUser) : {
+                                id: 'local-open-user',
+                                email: 'local@open',
+                                username: 'LocalUser'
+                            };
+
+                            authState.isAuthenticated = true;
+                            authState.user = fallbackUser;
+                            localStorage.setItem('testUser', JSON.stringify(fallbackUser));
+                            console.log('Supabase auth disabled; using local open-access user:', authState.user);
+                            await loadMixesFromAPI();
+                            updateAuthUI();
+                            return;
+                        }
+
                         // FOR LOCAL TESTING: Skip Supabase auth and use auto-generated user
                         const storedTestUser = localStorage.getItem('testUser');
                         if (storedTestUser) {
@@ -2384,7 +2404,7 @@ app.listen(3000, () => {
                             await loadMixesFromAPI();
                         } else {
                             // Fallback: Create auto test user for local testing (UUID format)
-                            const testId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                            const testId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
                                 const r = Math.random() * 16 | 0;
                                 const v = c === 'x' ? r : (r & 0x3 | 0x8);
                                 return v.toString(16);
@@ -2402,28 +2422,30 @@ app.listen(3000, () => {
                     }
 
                     // Listen for auth state changes
-                    supabaseClient.auth.onAuthStateChange((event, session) => {
-                        console.log('Auth state changed:', event);
-                        if (session) {
-                            authState.isAuthenticated = true;
-                            authState.user = {
-                                id: session.user.id,
-                                email: session.user.email,
-                                username: session.user.email.split('@')[0]
-                            };
-                            // Load user's mixes from API when they log in
-                            loadMixesFromAPI();
-                        } else {
-                            authState.isAuthenticated = false;
-                            authState.user = null;
-                            // Clear mixes when user logs out
-                            const mixesList = document.getElementById('mixesList');
-                            const mobileMixesList = document.getElementById('mobileMixesList');
-                            if (mixesList) mixesList.innerHTML = '';
-                            if (mobileMixesList) mobileMixesList.innerHTML = '';
-                        }
-                        updateAuthUI();
-                    });
+                    if (ENABLE_SUPABASE_AUTH) {
+                        supabaseClient.auth.onAuthStateChange((event, session) => {
+                            console.log('Auth state changed:', event);
+                            if (session) {
+                                authState.isAuthenticated = true;
+                                authState.user = {
+                                    id: session.user.id,
+                                    email: session.user.email,
+                                    username: session.user.email.split('@')[0]
+                                };
+                                // Load user's mixes from API when they log in
+                                loadMixesFromAPI();
+                            } else {
+                                authState.isAuthenticated = false;
+                                authState.user = null;
+                                // Clear mixes when user logs out
+                                const mixesList = document.getElementById('mixesList');
+                                const mobileMixesList = document.getElementById('mobileMixesList');
+                                if (mixesList) mixesList.innerHTML = '';
+                                if (mobileMixesList) mobileMixesList.innerHTML = '';
+                            }
+                            updateAuthUI();
+                        });
+                    }
 
                     function updateAuthUI() {
                         console.log('updateAuthUI called, isAuthenticated:', authState.isAuthenticated);
@@ -2462,6 +2484,11 @@ app.listen(3000, () => {
                     }
 
                     async function handleLogin() {
+                        if (!ENABLE_SUPABASE_AUTH) {
+                            console.log('Supabase auth is disabled; login is inactive.');
+                            return;
+                        }
+
                         const email = document.getElementById('username').value.trim();
                         const password = document.getElementById('password').value.trim();
 
@@ -2509,6 +2536,11 @@ app.listen(3000, () => {
                     }
 
                     async function handleLogout() {
+                        if (!ENABLE_SUPABASE_AUTH) {
+                            console.log('Supabase auth is disabled; logout is inactive.');
+                            return;
+                        }
+
                         console.log('Logging out...');
 
                         try {
@@ -2528,6 +2560,11 @@ app.listen(3000, () => {
 
                     // Sign up function (optional - for creating new users)
                     async function handleSignUp() {
+                        if (!ENABLE_SUPABASE_AUTH) {
+                            console.log('Supabase auth is disabled; sign-up is inactive.');
+                            return;
+                        }
+
                         const email = document.getElementById('username').value.trim();
                         const password = document.getElementById('password').value.trim();
 
