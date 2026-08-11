@@ -37,3 +37,4 @@ tmp/
 
 # Sentence transformers cache
 .cache/
+.vercel

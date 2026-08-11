@@ -36,6 +36,7 @@ app.add_middleware(
         "http://localhost:5500",
         "http://127.0.0.1:5500",
         "http://localhost:8080",
+        "https://no-code-rec-engine.vercel.app",  # Production frontend
     ],
     allow_origin_regex=r"https://.*\.vercel\.app",  # Allow all Vercel deployments
     allow_credentials=True,
