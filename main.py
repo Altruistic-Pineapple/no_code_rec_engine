@@ -88,6 +88,3 @@ async def startup_event():
         print(f"Warning: Database initialization issue: {e}")
         # Continue anyway - tables might already exist
 
-for route in app.routes:
-    print(route.path)
-
