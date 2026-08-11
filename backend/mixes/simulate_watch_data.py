@@ -17,28 +17,23 @@ async def simulate_watch_data(payload: dict, db: Session = Depends(get_db)):
     mix_id = payload.get('mix_id')
     if not mix_id:
         raise HTTPException(status_code=400, detail="mix_id required")
-    
-    # Use a fixed test user ID (just a string identifier for user_activity)
-    test_user_id = "test-user-001"
-    
+
+    # Caller supplies a session-scoped test user ID so manually-marked watches
+    # aren't wiped by a subsequent simulate call. Fall back to a generated UUID
+    # if the caller doesn't provide one.
+    test_user_id = payload.get('user_id') or f"test-{uuid.uuid4()}"
+
     # Get all content items for this mix
     content_items = db.query(MixContent).filter(MixContent.mix_id == mix_id).all()
     if not content_items:
         raise HTTPException(status_code=400, detail="No content items found for this mix")
-    
+
     # Mark 2-3 of the TOP items as watched (to ensure visible differences in Level 2/3)
     # Use first N items and randomly select from those to ensure they'd be in recommendations
     num_watched = min(random.randint(2, 3), len(content_items))
     # Take from the first 10 items (most likely to be in recommendations)
     top_items = content_items[:min(10, len(content_items))]
     watched_items = random.sample(top_items, num_watched)
-    
-    # Clear any existing watch data for this test user/mix combo
-    db.query(UserActivity).filter(
-        UserActivity.user_id == test_user_id,
-        UserActivity.mix_id == mix_id
-    ).delete()
-    db.commit()
     
     # Create watch records
     for item in watched_items:
