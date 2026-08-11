@@ -1339,8 +1339,8 @@
                         });
                     });
 
-                    // Load mixes on page load
-                    loadMixesFromLocalStorage();
+                    // Mixes are loaded by checkSession() once auth state is initialized;
+                    // calling loadMixesFromAPI here hit the authState temporal dead zone.
 
                     document.getElementById('uploadBtn').addEventListener('click', async () => {
                         const mixId = localStorage.getItem('currentMixId');
