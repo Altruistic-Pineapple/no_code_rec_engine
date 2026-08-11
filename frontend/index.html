@@ -11,9 +11,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <link href="temp.css" rel="stylesheet">
 
-    <!-- Supabase JS Client -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
         integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r"
         crossorigin="anonymous"></script>
@@ -2351,19 +2348,11 @@ app.listen(3000, () => {
                     updateLanguageOptions('ott');
 
                     // ==========================================
-                    // SUPABASE CONFIGURATION v2
-                    // ==========================================
-                    const SUPABASE_URL = 'https://nhugicjyxnxiccmpenzs.supabase.co';
-                    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5odWdpY2p5eG54aWNjbXBlbnpzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ2OTMxNTAsImV4cCI6MjA4MDI2OTE1MH0.uQ41mShGieG32gSJolAyjMhtpT3r9TtZevVMm19eB58';
-
-                    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-                    // ==========================================
                     // AUTHENTICATION STATE MANAGEMENT
+                    // Open-access mode: no external auth provider. The login modal
+                    // and buttons are kept in the DOM as inactive shells so auth
+                    // can be re-wired later without rebuilding UI.
                     // ==========================================
-
-                    // Set to true to enable Supabase auth, false to bypass it and open the app directly.
-                    const ENABLE_SUPABASE_AUTH = false;
 
                     let authState = {
                         isAuthenticated: false,
@@ -2372,88 +2361,19 @@ app.listen(3000, () => {
 
                     // Check for existing session on page load
                     async function checkSession() {
-                        if (!ENABLE_SUPABASE_AUTH) {
-                            const storedTestUser = localStorage.getItem('testUser');
-                            const fallbackUser = storedTestUser ? JSON.parse(storedTestUser) : {
-                                id: 'local-open-user',
-                                email: 'local@open',
-                                username: 'LocalUser'
-                            };
-
-                            authState.isAuthenticated = true;
-                            authState.user = fallbackUser;
-                            localStorage.setItem('testUser', JSON.stringify(fallbackUser));
-                            console.log('Supabase auth disabled; using local open-access user:', authState.user);
-                            await loadMixesFromAPI();
-                            updateAuthUI();
-                            return;
-                        }
-
-                        // FOR LOCAL TESTING: Skip Supabase auth and use auto-generated user
                         const storedTestUser = localStorage.getItem('testUser');
-                        if (storedTestUser) {
-                            authState.isAuthenticated = true;
-                            authState.user = JSON.parse(storedTestUser);
-                            console.log('Using stored test user:', authState.user);
-                            await loadMixesFromAPI();
-                            updateAuthUI();
-                            return;
-                        }
+                        const fallbackUser = storedTestUser ? JSON.parse(storedTestUser) : {
+                            id: 'local-open-user',
+                            email: 'local@open',
+                            username: 'LocalUser'
+                        };
 
-                        // Try real Supabase session
-                        const { data: { session } } = await supabaseClient.auth.getSession();
-                        if (session) {
-                            authState.isAuthenticated = true;
-                            authState.user = {
-                                id: session.user.id,
-                                email: session.user.email,
-                                username: session.user.email.split('@')[0]
-                            };
-                            console.log('Existing session found:', authState.user);
-                            await loadMixesFromAPI();
-                        } else {
-                            // Fallback: Create auto test user for local testing (UUID format)
-                            const testId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-                                const r = Math.random() * 16 | 0;
-                                const v = c === 'x' ? r : (r & 0x3 | 0x8);
-                                return v.toString(16);
-                            });
-                            authState.isAuthenticated = true;
-                            authState.user = {
-                                id: testId,
-                                email: 'test@localhost',
-                                username: 'TestUser'
-                            };
-                            localStorage.setItem('testUser', JSON.stringify(authState.user));
-                            console.log('Auto-created test user:', authState.user);
-                        }
+                        authState.isAuthenticated = true;
+                        authState.user = fallbackUser;
+                        localStorage.setItem('testUser', JSON.stringify(fallbackUser));
+                        console.log('Open-access mode; using local user:', authState.user);
+                        await loadMixesFromAPI();
                         updateAuthUI();
-                    }
-
-                    // Listen for auth state changes
-                    if (ENABLE_SUPABASE_AUTH) {
-                        supabaseClient.auth.onAuthStateChange((event, session) => {
-                            console.log('Auth state changed:', event);
-                            if (session) {
-                                authState.isAuthenticated = true;
-                                authState.user = {
-                                    id: session.user.id,
-                                    email: session.user.email,
-                                    username: session.user.email.split('@')[0]
-                                };
-                                // Load user's mixes from API when they log in
-                                loadMixesFromAPI();
-                            } else {
-                                authState.isAuthenticated = false;
-                                authState.user = null;
-                                // Clear mixes when user logs out
-                                const mixesList = document.getElementById('mixesList');
-                                const mobileMixesList = document.getElementById('mobileMixesList');
-                                if (mixesList) mixesList.innerHTML = '';
-                                if (mobileMixesList) mobileMixesList.innerHTML = '';
-                            }
-                            updateAuthUI();
-                        });
                     }
 
                     function updateAuthUI() {
@@ -2492,122 +2412,27 @@ app.listen(3000, () => {
                         }
                     }
 
+                    // Auth handlers — inactive shells. The UI stays wired so a real
+                    // auth provider can be dropped in later without rebuilding it.
                     async function handleLogin() {
-                        if (!ENABLE_SUPABASE_AUTH) {
-                            console.log('Supabase auth is disabled; login is inactive.');
-                            return;
-                        }
-
-                        const email = document.getElementById('username').value.trim();
-                        const password = document.getElementById('password').value.trim();
-
-                        if (!email || !password) {
-                            alert('Please enter both email and password');
-                            return;
-                        }
-
-                        try {
-                            const { data, error } = await supabaseClient.auth.signInWithPassword({
-                                email: email,
-                                password: password
-                            });
-
-                            if (error) {
-                                console.error('Login error:', error.message);
-                                alert('Login failed: ' + error.message);
-                                return;
-                            }
-
-                            console.log('Logged in:', data.user);
-
-                            // Close modal and clear form
-                            document.getElementById('loginForm').reset();
-
-                            const modalElement = document.getElementById('loginModal');
-                            const modal = bootstrap.Modal.getInstance(modalElement);
-                            if (modal) {
-                                modal.hide();
-                            }
-
-                            // Remove any leftover backdrop and body classes
-                            setTimeout(() => {
-                                const backdrop = document.querySelector('.modal-backdrop');
-                                if (backdrop) backdrop.remove();
-                                document.body.classList.remove('modal-open');
-                                document.body.style.overflow = '';
-                                document.body.style.paddingRight = '';
-                            }, 300);
-
-                        } catch (err) {
-                            console.error('Login error:', err);
-                            alert('An error occurred during login');
-                        }
+                        console.log('Auth is disabled; login is inactive.');
                     }
 
                     async function handleLogout() {
-                        if (!ENABLE_SUPABASE_AUTH) {
-                            console.log('Supabase auth is disabled; logout is inactive.');
-                            return;
-                        }
-
-                        console.log('Logging out...');
-
-                        try {
-                            const { error } = await supabaseClient.auth.signOut();
-                            if (error) {
-                                console.error('Logout error:', error.message);
-                            }
-                            console.log('Logged out');
-                        } catch (err) {
-                            console.error('Logout error:', err);
-                        }
-
-                        // Hide dropdown
+                        console.log('Auth is disabled; logout is inactive.');
                         const menu = document.getElementById('customDropdownMenu');
                         if (menu) menu.style.display = 'none';
                     }
 
-                    // Sign up function (optional - for creating new users)
                     async function handleSignUp() {
-                        if (!ENABLE_SUPABASE_AUTH) {
-                            console.log('Supabase auth is disabled; sign-up is inactive.');
-                            return;
-                        }
-
-                        const email = document.getElementById('username').value.trim();
-                        const password = document.getElementById('password').value.trim();
-
-                        if (!email || !password) {
-                            alert('Please enter both email and password');
-                            return;
-                        }
-
-                        try {
-                            const { data, error } = await supabaseClient.auth.signUp({
-                                email: email,
-                                password: password
-                            });
-
-                            if (error) {
-                                console.error('Sign up error:', error.message);
-                                alert('Sign up failed: ' + error.message);
-                                return;
-                            }
-
-                            alert('Sign up successful! Please check your email to confirm your account.');
-                            console.log('Signed up:', data.user);
-
-                        } catch (err) {
-                            console.error('Sign up error:', err);
-                            alert('An error occurred during sign up');
-                        }
+                        console.log('Auth is disabled; sign-up is inactive.');
                     }
 
                     // Setup event listeners
                     document.addEventListener('DOMContentLoaded', () => {
                         console.log('DOM ready, initializing auth...');
 
-                        // Check for existing Supabase session
+                        // Restore local user session (open-access mode)
                         checkSession();
 
                         // Login form submission

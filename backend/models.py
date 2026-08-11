@@ -9,13 +9,14 @@ class Mix(Base):
     __tablename__ = "mixes"
 
     id = Column(String, primary_key=True, index=True)
-    user_id = Column(String, nullable=True, index=True)  # Owner of this mix (Supabase user ID)
+    user_id = Column(String, nullable=True, index=True)  # Owner of this mix (external user ID)
     title = Column(String, nullable=False, index=True)
     status = Column(String, nullable=False, index=True)
     filename = Column(String, nullable=True)
     created_at = Column(DateTime, nullable=False, server_default=func.now(), index=True)
 
-# --- User record (matches Supabase schema) ---
+# --- User record (legacy: supabase_user_id column retained for backfill;
+#     Supabase auth was removed and this table is no longer written to) ---
 class User(Base):
     __tablename__ = "users"
 

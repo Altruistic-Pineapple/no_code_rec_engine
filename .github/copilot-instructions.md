@@ -98,7 +98,7 @@ See [DATA_COLLECTION_GUIDE.md](../DATA_COLLECTION_GUIDE.md) and [ML_MODELS_GUIDE
 
 ## Integration Points
 
-**Supabase Auth**: Frontend sends bearer token; `supabase_user_id` stored in `User.supabase_user_id`
+**Auth**: Currently disabled (open-access mode). The frontend uses a local user ID stored in `localStorage` under `testUser`. The `User.supabase_user_id` column is a legacy vestige of the removed Supabase integration and is no longer written to.
 
 **File Upload**: CSV files stored to disk in `backend/db/` with mapping metadata persisted to `FieldMapping` model
 

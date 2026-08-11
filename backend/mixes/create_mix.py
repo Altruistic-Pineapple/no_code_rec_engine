@@ -10,7 +10,7 @@ router = APIRouter()
 # Pydantic schema for incoming request
 class MixCreateRequest(BaseModel):
     title: str
-    user_id: str = None  # Owner of this mix (Supabase user ID)
+    user_id: str = None  # Owner of this mix (external user ID)
 
 # DB dependency
 def get_db():
